@@ -1,4 +1,4 @@
-LIBRARY ieee;
+LIBRARY ieee;--a
 USE ieee.std_logic_1164.ALL;
 
 ENTITY tb_FA IS
