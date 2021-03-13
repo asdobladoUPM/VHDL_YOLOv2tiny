@@ -7,21 +7,21 @@ END tb_ternaryAdder;
 ARCHITECTURE tb OF tb_ternaryAdder IS
 
     COMPONENT ternaryAdder
-    GENERIC(BITS: INTEGER:=4);
+    GENERIC(N: INTEGER);
         PORT (
-            A, B, C : IN STD_LOGIC_VECTOR(bits - 1 DOWNTO 0);
-            Output : OUT STD_LOGIC_VECTOR(bits + 1 DOWNTO 0)
+            A, B, C : IN STD_LOGIC_VECTOR((N - 1) DOWNTO 0);
+            Output : OUT STD_LOGIC_VECTOR((N + 1) DOWNTO 0)
         );
     END COMPONENT;
 
     SIGNAL A,B,C : STD_LOGIC_VECTOR(3 DOWNTO 0);
 
-    SIGNAL Output : STD_LOGIC_VECTOR(3 DOWNTO 0);
+    SIGNAL Output : STD_LOGIC_VECTOR(5 DOWNTO 0);
 
 BEGIN
 
     dut : ternaryAdder
-    GENERIC MAP (BITS =>4)
+    GENERIC MAP (N =>4)
     PORT MAP(
         A => A,
         B => B,
