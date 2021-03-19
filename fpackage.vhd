@@ -1,28 +1,28 @@
-library ieee; 
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
 
-package myPackage is
+PACKAGE myPackage IS
     -- contant value to add 1 i.e. num1 + 1 
-    constant S : signed (3 downto 0) := "0001";
-    
-    -- add two number i.e. num1 + num2
-    procedure sum2num(signal a: in signed(3 downto 0); 
-                            signal b: in signed(3 downto 0);
-                            signal sum : out signed (3 downto 0));
-                            
-    -- singals and types for ifLoop
-    signal f : unsigned(2 downto 0):= (others => '0');
-    type stateType is (startState, continueState, stopState);
-end package;
+    CONSTANT S : signed (3 DOWNTO 0) := "0001";
 
-package body myPackage is
-    
+    -- add two number i.e. num1 + num2
+    PROCEDURE sum2num(SIGNAL a : IN signed(3 DOWNTO 0);
+    SIGNAL b : IN signed(3 DOWNTO 0);
+    SIGNAL sum : OUT signed (3 DOWNTO 0));
+
+    -- singals and types for ifLoop
+    SIGNAL f : unsigned(2 DOWNTO 0) := (OTHERS => '0');
+    TYPE stateType IS (startState, continueState, stopState);
+END PACKAGE;
+
+PACKAGE BODY myPackage IS
+
     -- procedure for adding two numbers i.e. num1 + num2
-    procedure sum2num(signal a: in signed(3 downto 0); 
-                            signal b: in signed(3 downto 0);
-                            signal sum : out signed (3 downto 0)) is 
-        begin
-         sum <= a + b;
-     end sum2num;
-end myPackage;
+    PROCEDURE sum2num(SIGNAL a : IN signed(3 DOWNTO 0);
+    SIGNAL b : IN signed(3 DOWNTO 0);
+    SIGNAL sum : OUT signed (3 DOWNTO 0)) IS
+BEGIN
+    sum <= a + b;
+END sum2num;
+END myPackage;
