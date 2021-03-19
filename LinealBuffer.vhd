@@ -25,7 +25,7 @@ ARCHITECTURE rtl OF LinealBuffer IS
 
 BEGIN
 
-    moving : PROCESS (clk)
+    moving : PROCESS (reset,clk)
     BEGIN
         IF reset = res_val THEN
 

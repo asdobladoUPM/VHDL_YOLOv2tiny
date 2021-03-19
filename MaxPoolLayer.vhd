@@ -4,13 +4,14 @@ USE ieee.numeric_std.ALL;
 
 ENTITY MaxPoolLayer IS
     GENERIC (
-        L : INTEGER := 10
+        L_buffer : INTEGER := 10;
+        W_buffer : INTEGER := 6
     );
     PORT (
-        clk, rst : IN STD_LOGIC;
+        clk, reset : IN STD_LOGIC;
         col_odd, row_odd : IN STD_LOGIC;
-        input : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
-        output : OUT STD_LOGIC_VECTOR(5 DOWNTO 0)
+        input : IN STD_LOGIC_VECTOR((W_buffer-1) DOWNTO 0);
+        output : OUT STD_LOGIC_VECTOR((W_buffer-1)  DOWNTO 0)
     );
 END ENTITY MaxPoolLayer;
 
@@ -23,47 +24,50 @@ ARCHITECTURE rtl OF MaxPoolLayer IS
         );
         PORT (
             clk : IN STD_LOGIC;
+            reset : IN STD_LOGIC;
             enable_LBuffer : IN STD_LOGIC;
             input : IN STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
-
             output : OUT STD_LOGIC_VECTOR((W - 1) DOWNTO 0)
         );
-		  end component;
+    END COMPONENT;
 
-        CONSTANT rst_val : STD_LOGIC := '1';
+    CONSTANT rst_val : STD_LOGIC := '0';
 
-        SIGNAL s_input, max1, max2 : STD_LOGIC_VECTOR(5 DOWNTO 0);
+    SIGNAL s_input, max1, max2 : STD_LOGIC_VECTOR((W_buffer-1)  DOWNTO 0);
 
-        SIGNAL d1, d2, LBo : STD_LOGIC_VECTOR(5 DOWNTO 0);
+    SIGNAL d1, d2, LBo : STD_LOGIC_VECTOR((W_buffer-1)  DOWNTO 0);
+    SIGNAL s_ENBuffer : STD_LOGIC;
 
+BEGIN
+
+    s_ENBuffer <= NOT(col_odd);
+    s_input <= input;
+
+    LB : LinealBuffer
+    GENERIC MAP(L => L_buffer, W => W_Buffer)
+    PORT MAP(
+        clk => clk,
+        reset => reset,
+        enable_LBuffer => s_ENBuffer,
+        input => max1,
+        output => LBo);
+
+    sec : PROCESS (clk, reset)
     BEGIN
-	 
-	 s_input<=input;
+        IF reset = rst_val THEN
+            d1 <= (OTHERS => '0');
+            d2 <= (OTHERS => '0');
+        ELSIF rising_edge(clk) THEN
 
-        LB : LinealBuffer
-        GENERIC MAP(10, 6)
-        PORT MAP(
-            clk => clk,
-            enable_LBuffer => row_odd AND NOT(col_odd),
-            input => max1,
-            output => LBo);
-
-        sec : PROCESS (clk, rst)
-        BEGIN
-            IF rst = rst_val THEN
-                d1 <= (OTHERS => '0');
-                d2 <= (OTHERS => '0');
-                ELSIF rising_edge(clk) THEN
-
-                IF (col_odd='1') THEN
-                    d1 <= s_input;
-                END IF;
-
-                IF (col_odd='1' NOR row_odd='1') then
-                    d2 <= max2;
-                END IF;
+            IF (col_odd = '1') THEN
+                d1 <= s_input;
             END IF;
-        END PROCESS sec;
+
+            IF (col_odd = '1' NOR row_odd = '1') THEN
+                d2 <= max2;
+            END IF;
+        END IF;
+    END PROCESS sec;
 
     pmax1 : PROCESS (d1, s_input)
     BEGIN
