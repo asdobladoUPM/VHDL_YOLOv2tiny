@@ -2,18 +2,22 @@ LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
+LIBRARY work;
+USE work.YOLO_pkg.ALL;
+
 ENTITY ConvLayer IS
+    GENERIC (L : INTEGER := 0);
     PORT (
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0); --cambiar el 9 por una función
+        datain : IN STD_LOGIC_VECTOR((grid(L) * 6) - 1 DOWNTO 0);
 
-        padding : IN STD_LOGIC_VECTOR(8 DOWNTO 0);
+        padding : IN STD_LOGIC_VECTOR(grid(L) - 1 DOWNTO 0);
         startLbuffer : IN STD_LOGIC;
         enableLbuffer : IN STD_LOGIC;
 
-        Weight : IN STD_LOGIC_VECTOR(8 DOWNTO 0);
+        Weights : IN STD_LOGIC_VECTOR(grid(L) - 1 DOWNTO 0);
         Ynorm : IN signed(15 DOWNTO 0);
         Bnorm : IN signed(15 DOWNTO 0);
 
@@ -26,7 +30,7 @@ ARCHITECTURE rtl OF ConvLayer IS
     COMPONENT signedInverse
         PORT (
             Input : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
-            Weight : IN STD_LOGIC;
+            Weights : IN STD_LOGIC;
             Output : OUT STD_LOGIC_VECTOR(5 DOWNTO 0)
         );
 
@@ -42,9 +46,8 @@ ARCHITECTURE rtl OF ConvLayer IS
 
     COMPONENT LinealBuffer
         GENERIC (
-            L : INTEGER := 10;
-            W : INTEGER := 10
-        );
+            L : INTEGER;
+            W : INTEGER);
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
@@ -61,23 +64,25 @@ ARCHITECTURE rtl OF ConvLayer IS
         );
     END COMPONENT;
 
-    SIGNAL out_padding : STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
-    SIGNAL out_signedInverse : STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
+    SIGNAL out_padding : STD_LOGIC_VECTOR((grid(L) * 6) - 1 DOWNTO 0);
+    SIGNAL out_signedInverse : STD_LOGIC_VECTOR((grid(L) * 6) - 1 DOWNTO 0);
 
     SIGNAL out_teradder1 : STD_LOGIC_VECTOR(23 DOWNTO 0);
 
     SIGNAL out_teradder2 : STD_LOGIC_VECTOR(9 DOWNTO 0);
     SIGNAL sout_teradder2 : signed(9 DOWNTO 0);
 
-    SIGNAL out_mux_buffer : STD_LOGIC_VECTOR(9 DOWNTO 0); --funcion
-    SIGNAL sout_mux_buffer : signed (9 DOWNTO 0); --funcion
+    SIGNAL out_mux_buffer : STD_LOGIC_VECTOR(bufferwidth(L)-1 DOWNTO 0); 
+    SIGNAL sout_mux_buffer : signed (bufferwidth(L)-1 DOWNTO 0); 
 
-    SIGNAL in_buffer : STD_LOGIC_VECTOR(9 DOWNTO 0); --funcion
-    SIGNAL out_buffer : STD_LOGIC_VECTOR(9 DOWNTO 0); --funcion
-    SIGNAL sout_buffer : SIGNed(9 DOWNTO 0); --funcion
+    SIGNAL in_buffer : STD_LOGIC_VECTOR(bufferwidth(L)-1 DOWNTO 0); 
+    SIGNAL out_buffer : STD_LOGIC_VECTOR(bufferwidth(L)-1 DOWNTO 0); 
+    SIGNAL sout_buffer : SIGNED(bufferwidth(L)-1 DOWNTO 0); 
 
-    SIGNAL out_MUL : STD_LOGIC_VECTOR(15 DOWNTO 0); --funcion
-    SIGNAL sout_MUL : signed(16 + 10 - 1 DOWNTO 0); --funcion
+    SIGNAL sout_MUL : signed(16 + bufferwidth(L) - 1 DOWNTO 0); 
+    SIGNAL out_MUL : STD_LOGIC_VECTOR(16 + bufferwidth(L) - 1 DOWNTO 0);
+    SIGNAL qout_MUL : STD_LOGIC_VECTOR(15 DOWNTO 0);
+
 
     SIGNAL out_leakyReLU : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
@@ -99,7 +104,7 @@ BEGIN
     sig_inv : FOR I IN 1 TO 9 GENERATE
         UX : signedInverse PORT MAP(
             Input => out_padding((I * 6) - 1 DOWNTO (I * 6) - 6),
-            Weight => Weight(I - 1),
+            Weights => Weights(I - 1),
             Output => out_signedInverse((I * 6) - 1 DOWNTO (I * 6) - 6)
         );
     END GENERATE sig_inv;
@@ -166,11 +171,12 @@ BEGIN
     in_buffer <= STD_LOGIC_VECTOR(sout_teradder2 + sout_mux_buffer);
 
     sout_MUL <= signed(out_buffer) * Ynorm;
-    out_MUL <= std_logic_vector(sout_MUL);
+    out_MUL <= STD_LOGIC_VECTOR(sout_MUL);
+    qout_MUL <= out_MUL(16 + bufferwidth(L) - 1 DOWNTO 16 + bufferwidth(L) - 16);
 
     f_act : LeakyReLU
     PORT MAP(
-        input => out_MUL(16+10-1 downto 16+10-1-15), --funcion
+        input => qout_MUL,
         output => out_leakyReLU
     );
 
