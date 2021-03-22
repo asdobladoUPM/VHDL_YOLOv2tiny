@@ -4,7 +4,7 @@ USE IEEE.std_logic_1164.ALL;
 
 PACKAGE YOLO_pkg IS
 
-  FUNCTION rows( layer : IN INTEGER := 1) RETURN INTEGER;
+  FUNCTION rows(layer : IN INTEGER := 1) RETURN INTEGER;
 
   FUNCTION columns(layers : INTEGER := 1) RETURN INTEGER;
 
@@ -17,8 +17,6 @@ PACKAGE YOLO_pkg IS
   FUNCTION grid(layers : INTEGER := 1) RETURN INTEGER;
 
   FUNCTION bufferwidth(layers : INTEGER := 1) RETURN INTEGER;
-
-
 END YOLO_pkg;
 
 PACKAGE BODY YOLO_pkg IS
@@ -76,7 +74,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 4 =>
         filters := 128;
       WHEN 5 =>
-        filters := 4; --256
+        filters := 256; --256
       WHEN 6 =>
         filters := 512;
       WHEN 7 =>
@@ -104,7 +102,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 4 =>
         channels := 64;
       WHEN 5 =>
-        channels := 4; --128
+        channels := 128; --128
       WHEN 6 =>
         channels := 256;
       WHEN 7 =>
@@ -142,47 +140,43 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         kernels := 2;
       WHEN OTHERS =>
-        kernels := 0;
+        kernels := 1;
     END CASE;
     RETURN kernels;
   END kernels;
 
   FUNCTION grid(layers : INTEGER := 1) RETURN INTEGER IS
-  VARIABLE grid : INTEGER;
-BEGIN
-  CASE layers IS
-    WHEN OTHERS =>
-      grid := 9;
-  END CASE;
-  RETURN grid;
-END grid;
+  
+  BEGIN
+    RETURN 9;
+  END grid;
 
-FUNCTION bufferwidth(layers : INTEGER := 1) RETURN INTEGER IS
-VARIABLE bufferwidth : INTEGER;
-BEGIN
-CASE layers IS
-  WHEN 1 =>
-    bufferwidth := 11;
-  WHEN 2 =>
-    bufferwidth := 14;
-  WHEN 3 =>
-    bufferwidth := 15;
-  WHEN 4 =>
-    bufferwidth := 16;
-  WHEN 5 =>
-    bufferwidth := 17;
-  WHEN 6 =>
-    bufferwidth := 18;
-  WHEN 7 =>
-    bufferwidth := 19;
-  WHEN 8 =>
-    bufferwidth := 20;
-  WHEN 9 =>
-    bufferwidth := 20;
-  WHEN OTHERS =>
-    bufferwidth := 20;
-END CASE;
-RETURN bufferwidth;
-END bufferwidth;
+  FUNCTION bufferwidth(layers : INTEGER := 1) RETURN INTEGER IS
+    VARIABLE bufferwidth : INTEGER;
+  BEGIN
+    CASE layers IS
+      WHEN 1 =>
+        bufferwidth := 11;
+      WHEN 2 =>
+        bufferwidth := 14;
+      WHEN 3 =>
+        bufferwidth := 15;
+      WHEN 4 =>
+        bufferwidth := 16;
+      WHEN 5 =>
+        bufferwidth := 17;
+      WHEN 6 =>
+        bufferwidth := 18;
+      WHEN 7 =>
+        bufferwidth := 19;
+      WHEN 8 =>
+        bufferwidth := 20;
+      WHEN 9 =>
+        bufferwidth := 20;
+      WHEN OTHERS =>
+        bufferwidth := 20;
+    END CASE;
+    RETURN bufferwidth;
+  END bufferwidth;
 
 END YOLO_pkg;

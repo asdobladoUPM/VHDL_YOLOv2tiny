@@ -4,9 +4,9 @@ USE ieee.numeric_std.ALL;
 
 ENTITY signedInverse IS
     PORT (
-        Input : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
+        datain : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
         Weight : IN STD_LOGIC;
-        Output : OUT STD_LOGIC_VECTOR(5 DOWNTO 0)
+        dataout : OUT STD_LOGIC_VECTOR(5 DOWNTO 0)
     );
 END ENTITY signedInverse;
 
@@ -29,7 +29,7 @@ BEGIN
 
     END PROCESS MUX;
 
-    Output <= std_logic_vector(s_output);
-    s_input <= signed(Input);
+    dataout <= std_logic_vector(s_output);
+    s_input <= signed(datain);
 
 END ARCHITECTURE rtl;

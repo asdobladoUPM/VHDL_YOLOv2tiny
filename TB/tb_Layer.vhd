@@ -65,6 +65,8 @@ BEGIN
 
         start <= '1';
         WAIT FOR 1 ms;
+        reset <= '0';
+        wait for 10 ns;
         stop_the_clock <= true;
         WAIT;
     END PROCESS;

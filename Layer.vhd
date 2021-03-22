@@ -59,8 +59,8 @@ ARCHITECTURE rtl OF Layer IS
         PORT (
             clk, reset : IN STD_LOGIC;
             col_odd, row_odd : IN STD_LOGIC;
-            input : IN STD_LOGIC_VECTOR((W_buffer - 1) DOWNTO 0);
-            output : OUT STD_LOGIC_VECTOR((W_buffer - 1) DOWNTO 0));
+            datain : IN STD_LOGIC_VECTOR((W_buffer - 1) DOWNTO 0);
+            dataout : OUT STD_LOGIC_VECTOR((W_buffer - 1) DOWNTO 0));
     END COMPONENT;
 
     SIGNAL CLdataout : STD_LOGIC_VECTOR((K * 6) - 1 DOWNTO 0);
@@ -82,19 +82,6 @@ ARCHITECTURE rtl OF Layer IS
     SIGNAL padding : STD_LOGIC_VECTOR(8 DOWNTO 0);
 
 BEGIN
-    --    ConvL : FOR I IN 1 TO K GENERATE
-    --        ConvLX : ConvLayer
-    --        GENERIC MAP(L => L)
-    --        PORT MAP(
-    --            clk => clk, reset => reset,
-    --            datain => datain,
-    --            padding => padding, startLbuffer => startLbuffer, enableLBuffer => '1',
-    --            Weights => weights((I * Gr) - 1 DOWNTO (I * Gr) - 9),
-    --            Ynorm => bias(((I * 32) - 17) DOWNTO ((I * 32) - 32)),
-    --            Bnorm => bias(((I * 32) - 1) DOWNTO ((I * 32) - 16)),
-    --            dataout => CLdataout((I * 6) - 1 DOWNTO (I * 6) - 6));
-
-    --    END GENERATE ConvL;
 
     clk_proc : PROCESS (clk, reset)
     BEGIN
@@ -263,10 +250,57 @@ BEGIN
                     END IF;
                 END IF;
 
+            ELSE
+                --filas
+                row_odd <= '1';
+                count_row <= 1;
+                deadline_count_row <= 0;
+
+                --columnas
+                col_odd <= '1';
+                count_col <= 1;
+
+                --channel
+                count_ch <= 1;
+
+                --filters
+                count_filters <= 1;
+
+                --startBuffer
+                startLbuffer <= '1';
+                deadline_startLbuffer <= 0;
+
+                --padding
+                padding <= "001001111";
             END IF;
         END IF;
     END PROCESS clk_proc;
 
     padding(4) <= '0';
+
+    ConvL : FOR I IN 1 TO K GENERATE
+        ConvLX : ConvLayer
+        GENERIC MAP(L => L)
+        PORT MAP(
+            clk => clk, reset => reset,
+            datain => datain,
+            padding => padding, startLbuffer => startLbuffer, enableLBuffer => '1',
+            Weights => weights((I * Gr) - 1 DOWNTO (I * Gr) - 9),
+            Ynorm => bias(((I * 32) - 17) DOWNTO ((I * 32) - 32)),
+            Bnorm => bias(((I * 32) - 1) DOWNTO ((I * 32) - 16)),
+            dataout => CLdataout((I * 6) - 1 DOWNTO (I * 6) - 6));
+
+    END GENERATE ConvL;
+
+--    MPL : MaxPoolLayer
+--    GENERIC MAP(L => Hc/2, W => 6)
+--    PORT MAP(
+--        clk => clk,
+--        reset => reset,
+--        col_odd =>col_odd ,
+--        row_odd =>row_odd ,
+--        datain => ,
+--        dataout => 
+--    );
 
 END ARCHITECTURE rtl;

@@ -4,8 +4,8 @@ USE ieee.numeric_std.ALL;
 
 ENTITY LeakyReLU IS
     PORT (
-        input : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-        output : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
+        datain : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+        dataout : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
     );
 END ENTITY LeakyReLU;
 
@@ -13,14 +13,14 @@ ARCHITECTURE rtl OF LeakyReLU IS
 
 BEGIN
 
-    leaky : PROCESS (input)
+    leaky : PROCESS (datain)
     BEGIN
-        CASE input(15) IS
+        CASE datain(15) IS
             WHEN '0' =>
-                output <= input;
+                dataout <= datain;
 
             WHEN OTHERS =>
-                output <= input(15) & input(15) & input(15) & input(15 DOWNTO 3);
+                dataout <= datain(15) & datain(15) & datain(15) & datain(15 DOWNTO 3);
 
         END CASE;
 

@@ -11,8 +11,8 @@ ENTITY LinealBuffer IS
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
         enable_LBuffer : IN STD_LOGIC;
-        input : IN STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
-        output : OUT STD_LOGIC_VECTOR((W - 1) DOWNTO 0)
+        datain : IN STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
+        dataout : OUT STD_LOGIC_VECTOR((W - 1) DOWNTO 0)
     );
 END ENTITY LinealBuffer;
 
@@ -38,10 +38,10 @@ BEGIN
                     content_LB((L - 1) - I) <= content_LB((L - 1) - (I + 1));
                 END LOOP;
 
-                content_LB(0) <= input;
+                content_LB(0) <= datain;
             END IF;
 
-            output <= content_LB(L - 1);
+            dataout <= content_LB(L - 1);
 
         END IF;
 

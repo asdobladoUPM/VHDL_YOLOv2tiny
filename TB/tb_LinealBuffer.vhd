@@ -16,15 +16,15 @@ ARCHITECTURE bench OF LinealBuffer_tb IS
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
             enable_LBuffer : IN STD_LOGIC;
-            input : IN STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
-            output : OUT STD_LOGIC_VECTOR((W - 1) DOWNTO 0)
+            datain : IN STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
+            dataout : OUT STD_LOGIC_VECTOR((W - 1) DOWNTO 0)
         );
     END COMPONENT;
 
     SIGNAL clk,reset : STD_LOGIC;
     SIGNAL enable_LBuffer : STD_LOGIC;
-    SIGNAL input : STD_LOGIC_VECTOR(1 DOWNTO 0);
-    SIGNAL output : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL datain : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL dataout : STD_LOGIC_VECTOR(1 DOWNTO 0);
 
     CONSTANT clock_period : TIME := 10 ns;
     SIGNAL stop_the_clock : BOOLEAN;
@@ -39,8 +39,8 @@ BEGIN
         clk => clk,
         reset => reset,
         enable_LBuffer => enable_LBuffer,
-        input => input,
-        output => output);
+        datain => datain,
+        dataout => dataout);
 
     stimulus : PROCESS
     BEGIN
@@ -48,46 +48,46 @@ BEGIN
         -- Put initialisation code here
         reset <= '0';
         enable_LBuffer <= '0';
-        input <= (OTHERS => '0');
+        datain <= (OTHERS => '0');
         WAIT FOR clock_period;
 
         -- Put test bench stimulus code here
         reset <= '1';
         enable_LBuffer <= '1';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
-        input <= "11";
+        datain <= "11";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         enable_LBuffer <= '0';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
-        input <= "01";
+        datain <= "01";
         WAIT FOR clock_period;
         enable_LBuffer <= '0';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
-        input <= "11";
+        datain <= "11";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         enable_LBuffer <= '0';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
-        input <= "01";
+        datain <= "01";
         WAIT FOR clock_period;
         enable_LBuffer <= '0';
-        input <= "00";
+        datain <= "00";
         WAIT FOR clock_period;
         stop_the_clock <= true;
         WAIT;

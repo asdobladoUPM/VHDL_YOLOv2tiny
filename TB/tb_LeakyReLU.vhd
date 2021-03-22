@@ -8,36 +8,36 @@ ARCHITECTURE tb OF tb_LeakyReLU IS
 
     COMPONENT LeakyReLU
         PORT (
-            input : IN STD_LOGIC_VECTOR (15 DOWNTO 0);
-            output : OUT STD_LOGIC_VECTOR (15 DOWNTO 0));
+            datain : IN STD_LOGIC_VECTOR (15 DOWNTO 0);
+            dataout : OUT STD_LOGIC_VECTOR (15 DOWNTO 0));
     END COMPONENT;
 
-    SIGNAL input : STD_LOGIC_VECTOR (15 DOWNTO 0);
-    SIGNAL output : STD_LOGIC_VECTOR (15 DOWNTO 0);
+    SIGNAL datain : STD_LOGIC_VECTOR (15 DOWNTO 0);
+    SIGNAL dataout : STD_LOGIC_VECTOR (15 DOWNTO 0);
 
 BEGIN
 
     dut : LeakyReLU
     PORT MAP(
-        input => input,
-        output => output);
+        datain => datain,
+        dataout => dataout);
 
     stimuli : PROCESS
     BEGIN
 
-        input <= (OTHERS => '0');
+        datain <= (OTHERS => '0');
         WAIT FOR 50 ns;
 
-        input <= "0000000000001010";
+        datain <= "0000000000001010";
         WAIT FOR 50 ns;
 
-        input <= "1111111111110110";
+        datain <= "1111111111110110";
         WAIT FOR 50 ns;
 
-        input <= "0000010011101000";
+        datain <= "0000010011101000";
         WAIT FOR 50 ns;
 
-        input <= "1111101100011000";
+        datain <= "1111101100011000";
         WAIT FOR 50 ns;
 
         WAIT;

@@ -10,13 +10,13 @@ ARCHITECTURE tb OF tb_ternaryAdder IS
     GENERIC(N: INTEGER);
         PORT (
             A, B, C : IN STD_LOGIC_VECTOR((N - 1) DOWNTO 0);
-            Output : OUT STD_LOGIC_VECTOR((N + 1) DOWNTO 0)
+            dataout : OUT STD_LOGIC_VECTOR((N + 1) DOWNTO 0)
         );
     END COMPONENT;
 
     SIGNAL A,B,C : STD_LOGIC_VECTOR(3 DOWNTO 0);
 
-    SIGNAL Output : STD_LOGIC_VECTOR(5 DOWNTO 0);
+    SIGNAL dataout : STD_LOGIC_VECTOR(5 DOWNTO 0);
 
 BEGIN
 
@@ -26,7 +26,7 @@ BEGIN
         A => A,
         B => B,
         C => C,
-        Output => Output);
+        dataout => dataout);
 
     stimuli : PROCESS
     BEGIN

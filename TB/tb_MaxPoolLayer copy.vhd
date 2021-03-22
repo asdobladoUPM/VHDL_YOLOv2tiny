@@ -9,8 +9,8 @@ ARCHITECTURE bench OF MaxPoolLayer_tb IS
 
   COMPONENT MaxPoolLayer
     GENERIC (
-      L_buffer : INTEGER := 10;
-      W_buffer: integer :=3
+      L_buffer : INTEGER := 2;
+      W_buffer: integer :=4
     );
     PORT (
       clk, reset : IN STD_LOGIC;
@@ -22,15 +22,15 @@ ARCHITECTURE bench OF MaxPoolLayer_tb IS
 
   SIGNAL clk, reset : STD_LOGIC;
   SIGNAL col_odd, row_odd : STD_LOGIC;
-  SIGNAL datain : STD_LOGIC_VECTOR(2 DOWNTO 0);
-  SIGNAL dataout : STD_LOGIC_VECTOR(2 DOWNTO 0);
+  SIGNAL datain : STD_LOGIC_VECTOR(3 DOWNTO 0);
+  SIGNAL dataout : STD_LOGIC_VECTOR(3 DOWNTO 0);
 
   CONSTANT clock_period : TIME := 10 ns;
   SIGNAL stop_the_clock : BOOLEAN;
 
 BEGIN
 
-  uut : MaxPoolLayer GENERIC MAP(L_buffer =>4, W_buffer=>3)
+  uut : MaxPoolLayer GENERIC MAP(L_buffer =>2, W_buffer=>4)
   PORT MAP(
     clk => clk,
     reset => reset,
@@ -51,148 +51,73 @@ BEGIN
     -- Put test bench stimulus code here
     reset <= '1';
 
-    datain <= "101";
+    datain <= "1111";
     col_odd <= '1';
     row_odd <= '1';
     wait for clock_period;
 
-    datain <= "011";
+    datain <= "1101";
     col_odd <= '0';
     wait for clock_period;
 
-    datain <= "001";
+    datain <= "0011";
     col_odd <= '1';
     wait for clock_period;
 
-    datain <= "010";
+    datain <= "0111";
     col_odd <= '0';
     wait for clock_period;
 
-    datain <= "110";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "000";
-    col_odd <= '0';
-    wait for clock_period;
-
-    datain <= "000";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "011";
-    col_odd <= '0';
-    wait for clock_period;
-
-    datain <= "001";
+    datain <= "1101";
     col_odd <= '1';
     row_odd <= '0';
     wait for clock_period;
 
-    datain <= "001";
+    datain <= "1010";
     col_odd <= '0';
     wait for clock_period;
 
-    datain <= "011";
+    datain <= "0010";
     col_odd <= '1';
     wait for clock_period;
 
-    datain <= "000";
+    datain <= "0001";
     col_odd <= '0';
     wait for clock_period;
 
-    datain <= "001";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "111";
-    col_odd <= '0';
-    wait for clock_period;
-
-    datain <= "001";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "001";
-    col_odd <= '0';
-    wait for clock_period;
-    
-        datain <= "101";
-    col_odd <= '1';
-    row_odd <= '1';
-    wait for clock_period;
-datain <= "101";
+    datain <= "0100";
     col_odd <= '1';
     row_odd <= '1';
     wait for clock_period;
 
-    datain <= "011";
+    datain <= "0001";
     col_odd <= '0';
     wait for clock_period;
 
-    datain <= "001";
+    datain <= "1011";
     col_odd <= '1';
     wait for clock_period;
 
-    datain <= "010";
+    datain <= "0001";
     col_odd <= '0';
     wait for clock_period;
 
-    datain <= "110";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "000";
-    col_odd <= '0';
-    wait for clock_period;
-
-    datain <= "000";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "011";
-    col_odd <= '0';
-    wait for clock_period;
-
-    datain <= "001";
+    datain <= "1111";
     col_odd <= '1';
     row_odd <= '0';
     wait for clock_period;
 
-    datain <= "001";
+    datain <= "1100";
     col_odd <= '0';
     wait for clock_period;
 
-    datain <= "011";
+    datain <= "0111";
     col_odd <= '1';
     wait for clock_period;
 
-    datain <= "000";
+    datain <= "0000";
     col_odd <= '0';
     wait for clock_period;
-
-    datain <= "001";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "111";
-    col_odd <= '0';
-    wait for clock_period;
-
-    datain <= "001";
-    col_odd <= '1';
-    wait for clock_period;
-
-    datain <= "001";
-    col_odd <= '0';
-    wait for clock_period;
-    
-        datain <= "101";
-    col_odd <= '1';
-    row_odd <= '1';
-    wait for clock_period;
-
-    
 
     stop_the_clock <= true;
     WAIT;
