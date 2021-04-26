@@ -4,46 +4,45 @@ USE ieee.numeric_std.ALL;
 
 ENTITY LinealBuffer IS
     GENERIC (
-        L : INTEGER := 10;
-        W : INTEGER := 10
+        BL : INTEGER := 10;
+        WL : INTEGER := 10
     );
     PORT (
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
         enable_LBuffer : IN STD_LOGIC;
-        datain : IN STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
-        dataout : OUT STD_LOGIC_VECTOR((W - 1) DOWNTO 0)
+        datain : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
+        dataout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
     );
 END ENTITY LinealBuffer;
 
 ARCHITECTURE rtl OF LinealBuffer IS
 
-    TYPE mem_t IS ARRAY(0 TO (L - 1)) OF STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
+    TYPE mem_t IS ARRAY(0 TO (BL - 1)) OF STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
 
     SIGNAL content_LB : mem_t;
-    CONSTANT res_val:std_logic :='0';
+    CONSTANT res_val : STD_LOGIC := '0';
 
 BEGIN
 
-    moving : PROCESS (reset,clk)
+    moving : PROCESS (reset, clk)
     BEGIN
         IF reset = res_val THEN
 
-            content_LB <= (others => (others => '0' ));
+            content_LB <= (OTHERS => (OTHERS => '0'));
 
         ELSIF rising_edge(clk) THEN
             IF (enable_LBuffer = '1') THEN
 
-                FOR I IN 0 TO (L - 2) LOOP
-                    content_LB((L - 1) - I) <= content_LB((L - 1) - (I + 1));
+                FOR I IN 0 TO (BL - 2) LOOP
+                    content_LB((BL - 1) - I) <= content_LB((BL - 1) - (I + 1));
                 END LOOP;
 
                 content_LB(0) <= datain;
             END IF;
-
-            dataout <= content_LB(L - 1);
-
         END IF;
 
     END PROCESS moving;
+    dataout <= content_LB(BL - 1);
+
 END ARCHITECTURE rtl;

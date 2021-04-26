@@ -6,17 +6,22 @@ PACKAGE YOLO_pkg IS
 
   FUNCTION rows(layer : IN INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION columns(layers : INTEGER := 1) RETURN INTEGER;
+  FUNCTION columns(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION filters(layers : INTEGER := 1) RETURN INTEGER;
+  FUNCTION filters(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION channels(layers : INTEGER := 1) RETURN INTEGER;
+  FUNCTION channels(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION kernels(layers : INTEGER := 1) RETURN INTEGER;
+  FUNCTION kernels(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION grid(layers : INTEGER := 1) RETURN INTEGER;
+  FUNCTION grid(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION bufferwidth(layers : INTEGER := 1) RETURN INTEGER;
+  FUNCTION bits(layer : INTEGER := 1) RETURN INTEGER;
+
+  FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER;
+
+  FUNCTION bufferwidth(layer : INTEGER := 1) RETURN INTEGER;
+
 END YOLO_pkg;
 
 PACKAGE BODY YOLO_pkg IS
@@ -36,15 +41,15 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 5 =>
         rows := 26;
       WHEN OTHERS =>
-        rows := 13;
+        rows := 10; --13
     END CASE;
     RETURN rows;
   END rows;
 
-  FUNCTION columns(layers : INTEGER := 1) RETURN INTEGER IS
+  FUNCTION columns(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE columns : INTEGER;
   BEGIN
-    CASE layers IS
+    CASE layer IS
       WHEN 1 =>
         columns := 416;
       WHEN 2 =>
@@ -56,15 +61,15 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 5 =>
         columns := 26;
       WHEN OTHERS =>
-        columns := 13;
+        columns := 4; --13
     END CASE;
     RETURN columns;
   END columns;
 
-  FUNCTION filters(layers : INTEGER := 1) RETURN INTEGER IS
+  FUNCTION filters(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE filters : INTEGER;
   BEGIN
-    CASE layers IS
+    CASE layer IS
       WHEN 1 =>
         filters := 16;
       WHEN 2 =>
@@ -84,15 +89,15 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         filters := 125;
       WHEN OTHERS =>
-        filters := 0;
+        filters := 4; --0
     END CASE;
     RETURN filters;
   END filters;
 
-  FUNCTION channels(layers : INTEGER := 1) RETURN INTEGER IS
+  FUNCTION channels(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE channels : INTEGER;
   BEGIN
-    CASE layers IS
+    CASE layer IS
       WHEN 1 =>
         channels := 3;
       WHEN 2 =>
@@ -112,15 +117,15 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         channels := 1024;
       WHEN OTHERS =>
-        channels := 0;
+        channels := 0; --0
     END CASE;
     RETURN channels;
   END channels;
 
-  FUNCTION kernels(layers : INTEGER := 1) RETURN INTEGER IS
+  FUNCTION kernels(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE kernels : INTEGER;
   BEGIN
-    CASE layers IS
+    CASE layer IS
       WHEN 1 =>
         kernels := 1;
       WHEN 2 =>
@@ -140,21 +145,48 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         kernels := 2;
       WHEN OTHERS =>
-        kernels := 1;
+        kernels := 2; --1
     END CASE;
     RETURN kernels;
   END kernels;
 
-  FUNCTION grid(layers : INTEGER := 1) RETURN INTEGER IS
-  
+  FUNCTION grid(layer : INTEGER := 1) RETURN INTEGER IS
+
   BEGIN
     RETURN 9;
   END grid;
 
-  FUNCTION bufferwidth(layers : INTEGER := 1) RETURN INTEGER IS
+  FUNCTION bits(layer : INTEGER := 1) RETURN INTEGER IS
+
+    VARIABLE bits : INTEGER;
+  BEGIN
+    CASE layer IS
+      WHEN 9 =>
+        bits := 16;
+      WHEN OTHERS =>
+        bits := 6;
+    END CASE;
+    return bits;
+  END bits;
+
+  FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER IS --DATOS INCOMPLETO
+
+    VARIABLE bitsAddress : INTEGER;
+  BEGIN
+    CASE layer IS
+      WHEN 9 =>
+        bitsAddress := 16;
+      WHEN OTHERS =>
+        bitsAddress := 6;
+    END CASE;
+        return bitsAddress;
+
+  END bitsAddress;
+
+  FUNCTION bufferwidth(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE bufferwidth : INTEGER;
   BEGIN
-    CASE layers IS
+    CASE layer IS
       WHEN 1 =>
         bufferwidth := 11;
       WHEN 2 =>
