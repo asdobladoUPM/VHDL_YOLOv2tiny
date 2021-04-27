@@ -35,8 +35,8 @@ END MemControl;
 ARCHITECTURE arch OF MemControl IS
 
     --constantes
-    CONSTANT Hc : INTEGER := columns(layer);
-    CONSTANT Hr : INTEGER := rows(layer);
+    CONSTANT Hc : INTEGER := memcolumns(layer);
+    CONSTANT Hr : INTEGER := memrows(layer);
     CONSTANT Ch : INTEGER := channels(layer);
     CONSTANT F : INTEGER := filters(layer);
     CONSTANT K : INTEGER := kernels(layer);
@@ -106,7 +106,7 @@ BEGIN
 
             oe <= '0';
 
-            rcount_col <= - 3; --desfase
+            rcount_col <= - 2; --desfase
             rcount_ch <= 0;
             rcount_row <= 0;
             count_validout <= - 1;
@@ -231,7 +231,12 @@ BEGIN
                             IF rcount_row = Hr - 1 THEN -- ultimo dato
                                 rbase <= 0;
                                 raddress <= 0;
-                                rdir_deadline <= 0;
+                                rdir_deadline <= -2;
+                                addcount_row <= 0;
+                                s_rmem <= 0;
+                                rcount_col <= - 2; 
+                                rcount_ch <= 0;
+                                count_validout <= - 1;
                                 oe <= '0';
                             END IF;
                         END IF;
@@ -254,6 +259,7 @@ BEGIN
                             IF rcount_row = Hr - 1 THEN -- ultimo dato
                                 rcount_row <= 0;
                                 s_kernelrow <= 1;
+                                s_kernelCol <= 1;
                             END IF;
                         END IF;
                     END IF;
