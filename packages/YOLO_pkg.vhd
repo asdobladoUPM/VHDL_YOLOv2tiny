@@ -20,6 +20,8 @@ PACKAGE YOLO_pkg IS
 
   FUNCTION grid(layer : INTEGER := 1) RETURN INTEGER;
 
+  FUNCTION step(layer : INTEGER := 1) RETURN INTEGER;
+
   FUNCTION bits(layer : INTEGER := 1) RETURN INTEGER;
 
   FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER;
@@ -119,17 +121,17 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 4 =>
         filters := 128;
       WHEN 5 =>
-        filters := 256; --256
+        filters := 256; 
       WHEN 6 =>
-        filters := 512;
+        filters := 512; --512
       WHEN 7 =>
         filters := 1024;
       WHEN 8 =>
         filters := 1024;
       WHEN 9 =>
-        filters := 125;
+        filters := 128;
       WHEN OTHERS =>
-        filters := 0; --0
+        filters := 6; --0
     END CASE;
     RETURN filters;
   END filters;
@@ -147,9 +149,9 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 4 =>
         channels := 64;
       WHEN 5 =>
-        channels := 128; --128
+        channels := 128; 
       WHEN 6 =>
-        channels := 256;
+        channels := 256; --256
       WHEN 7 =>
         channels := 512;
       WHEN 8 =>
@@ -157,7 +159,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         channels := 1024;
       WHEN OTHERS =>
-        channels := 0; --0
+        channels := 3; --0
     END CASE;
     RETURN channels;
   END channels;
@@ -185,7 +187,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         kernels := 2;
       WHEN OTHERS =>
-        kernels := 1; --1
+        kernels := 2; --1
     END CASE;
     RETURN kernels;
   END kernels;
@@ -194,6 +196,18 @@ PACKAGE BODY YOLO_pkg IS
   BEGIN
     RETURN 9;
   END grid;
+
+  FUNCTION step (layer : INTEGER := 1) RETURN INTEGER IS
+    VARIABLE step : INTEGER;
+  BEGIN
+    CASE layer IS
+      WHEN 6 =>
+        step := 1;
+      WHEN OTHERS =>
+        step := 2;
+    END CASE;
+    RETURN step;
+  END step;
 
   FUNCTION bits(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE bits : INTEGER;

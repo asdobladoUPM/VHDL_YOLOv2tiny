@@ -106,10 +106,10 @@ BEGIN
 
             oe <= '0';
 
-            rcount_col <= - 2; --desfase
+            rcount_col <= -2; --desfase
             rcount_ch <= 0;
             rcount_row <= 0;
-            count_validout <= - 1;
+            count_validout <= 0;
 
             s_rmem <= 0;
             s_kernelCol <= 1; --desfase

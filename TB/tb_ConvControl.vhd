@@ -14,7 +14,7 @@ ARCHITECTURE bench OF tb_ConvControl IS
     PORT (
       clk : IN STD_LOGIC;
       reset : IN STD_LOGIC;
-      start : IN STD_LOGIC;
+      validIn : IN STD_LOGIC;
 
       startLBuffer : OUT STD_LOGIC;
       enableLBuffer : OUT STD_LOGIC;
@@ -24,7 +24,7 @@ ARCHITECTURE bench OF tb_ConvControl IS
 
   SIGNAL clk : STD_LOGIC;
   SIGNAL reset : STD_LOGIC;
-  SIGNAL start : STD_LOGIC;
+  SIGNAL validIn : STD_LOGIC;
   SIGNAL startLBuffer : STD_LOGIC;
   SIGNAL enableLBuffer : STD_LOGIC;
   SIGNAL validOut : STD_LOGIC;
@@ -40,7 +40,7 @@ BEGIN
   PORT MAP(
     clk => clk,
     reset => reset,
-    start => start,
+    validIn => validIn,
     startLBuffer => startLBuffer,
     enableLBuffer => enableLBuffer,
     validOut => validOut);
@@ -50,15 +50,15 @@ BEGIN
 
     -- Put initialisation code here
     reset <= '0';
-    start <= '0';
+    validIn <= '0';
     wait for 20 ns;
     -- Put test bench stimulus code here
 
     reset <= '1';
 
-    wait for 20 ns;
+    wait for 15 ns;
 
-    start <= '1';
+    validIn <= '1';
 
     wait for 1000 ms;
 

@@ -9,14 +9,12 @@ ARCHITECTURE bench OF MPcontrol_tb IS
 
     COMPONENT MPcontrol
         GENERIC (
-            Step : INTEGER;
-            Hc : INTEGER;
-            Ch : INTEGER
+            layer : INTEGER
         );
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-            start : IN STD_LOGIC;
+            validIn : IN STD_LOGIC;
             val_d1 : OUT STD_LOGIC;
             enLBuffer : OUT STD_LOGIC;
             validOut : OUT STD_LOGIC
@@ -25,7 +23,7 @@ ARCHITECTURE bench OF MPcontrol_tb IS
 
     SIGNAL clk : STD_LOGIC;
     SIGNAL reset : STD_LOGIC;
-    SIGNAL start : STD_LOGIC;
+    SIGNAL validIn : STD_LOGIC;
     SIGNAL val_d1 : STD_LOGIC;
     SIGNAL enLBuffer : STD_LOGIC;
     SIGNAL validOut : STD_LOGIC;
@@ -37,13 +35,11 @@ BEGIN
 
     -- Insert values for generic parameters !!
     uut : MPcontrol GENERIC MAP(
-        Step => 1,
-        Hc => 4,
-        Ch => 6)
+        Layer => 6)
     PORT MAP(
         clk => clk,
         reset => reset,
-        start => start,
+        validIn => validIn,
         val_d1 => val_d1,
         enLBuffer => enLBuffer,
         validOut => validOut);
@@ -53,24 +49,24 @@ BEGIN
 
         -- Put initialisation code here
         reset <= '0';
-        start <= '0';
+        validIn <= '0';
         -- Put test bench stimulus code here
 
         wait for 20 ns;
 
         reset <= '1';
 
-        wait for 20 ns;
+        wait for 15 ns;
 
-        start <= '1';
+        validIn <= '1';
 
         wait for 1 us;
 
-        start <= '0';
+        validIn <= '0';
 
         wait for 40 ns;
 
-        start <= '1';
+        validIn <= '1';
         
         wait for 5 us;
 

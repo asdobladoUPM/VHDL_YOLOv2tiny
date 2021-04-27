@@ -13,10 +13,10 @@ ENTITY ConvControl IS
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
-        start : IN STD_LOGIC;
+        validIn : IN STD_LOGIC;
 
         startLBuffer : OUT STD_LOGIC;
-        enableLBuffer : OUT STD_LOGIC; --?????????????????????? DO ITe s como el start del CV
+        enableLBuffer : OUT STD_LOGIC;
 
         validOut : OUT STD_LOGIC
     );
@@ -37,7 +37,9 @@ ARCHITECTURE rtl OF ConvControl IS
     SIGNAL count_filters : INTEGER;
     SIGNAL count_ch : INTEGER;
 
-    SIGNAL count_data : INTEGER := 0;
+    SIGNAL s_startLBuffer : STD_LOGIC;
+
+    SIGNAL novalid : STD_LOGIC;
 
 BEGIN
     clk_proc : PROCESS (clk, reset)
@@ -48,7 +50,7 @@ BEGIN
             count_row <= 0;
 
             --columnas
-            count_col <= - 1;
+            count_col <= 0;
 
             --channel
             count_ch <= 0;
@@ -56,28 +58,23 @@ BEGIN
             --filters
             count_filters <= 0;
 
-            --startBuffer
-            startLbuffer <= '1';
-            count_data <= 0;
-            --validOut
-            validOut <= '0';
+            novalid <= '1';
 
         ELSIF rising_edge(clk) THEN
 
-            IF start = '1' THEN
-
-                enableLBuffer <= '1';
+            IF validIn = '1' THEN
 
                 --Contadores
                 IF count_col < Hc - 1 THEN
                     count_col <= count_col + 1;
                 ELSE
+                    novalid <= '0';
                     count_col <= 0;
                     count_ch <= count_ch + 1;
                     IF count_ch = Ch - 1 THEN
                         count_ch <= 0;
                         count_filters <= count_filters + 1;
-                        IF count_filters = F/K THEN
+                        IF count_filters = F/K -1 THEN
                             count_filters <= 0;
                             count_row <= count_row + 1;
                             IF count_row = Hr - 1 THEN
@@ -86,36 +83,32 @@ BEGIN
                         END IF;
                     END IF;
                 END IF;
-
-                count_data <= count_data + 1;
-
-                IF count_data = (Hc * Ch) THEN --cuando terminemos con el filtro 
-                    startLbuffer <= '1';
-                    count_data <= 1;
-                    validOut <= '0';
-
-                ELSE
-                    --startLBuffer     a 1 cuando empezamos una nueva fila o filtro
-                    IF count_data < Hc THEN
-                        startLbuffer <= '1';
-                    ELSE
-                        startLbuffer <= '0';
-                    END IF;
-
-                    --validOut 
-                    IF count_data <= Hc * (Ch - 1) -1 THEN --ultumo canal
-                        validOut <= '0';
-                    ELSE
-                        validOut <= '1';
-                    END IF;
-                END IF;
-
             END IF;
-
         END IF;
+
     END PROCESS clk_proc;
 
-    data_proc : PROCESS (count_data)
+    comb_proc : PROCESS (validIn, count_ch)
     BEGIN
-    END PROCESS data_proc;
+
+        IF validIn = '1' THEN
+
+            enableLBuffer <= '1';
+
+            IF count_ch = 0 THEN
+                s_startLBuffer <= '1';
+            ELSE
+                s_startLBuffer <= '0';
+            END IF;
+
+        ELSE
+            enableLBuffer <= '0';
+            s_startLBuffer <= '0';
+        END IF;
+
+    END PROCESS comb_proc;
+
+    validOut <= s_startLBuffer AND NOT(novalid);
+    startLBuffer <= s_startLBuffer;
+
 END ARCHITECTURE rtl;
