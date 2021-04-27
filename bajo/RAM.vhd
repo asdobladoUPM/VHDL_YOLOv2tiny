@@ -25,6 +25,7 @@ ARCHITECTURE arch OF RAM IS
     SIGNAL RAM_content : RAM_mem;
 
 BEGIN
+
     p_clk : PROCESS (clk)
     BEGIN
         IF rising_edge(clk) THEN
@@ -36,6 +37,6 @@ BEGIN
         END IF;
     END PROCESS;
 
-    Dout <= RAM_content(to_integer(unsigned(rAddr))) WHEN oe = '1' ELSE (OTHERS => 'Z');
+    Dout <= RAM_content(to_integer(unsigned(rAddr))) WHEN oe = '1' ELSE (OTHERS => 'Z'); --mejor registrarla y sin OE ni Z
 
 END arch;

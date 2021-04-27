@@ -185,7 +185,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         kernels := 2;
       WHEN OTHERS =>
-        kernels := 2; --1
+        kernels := 1; --1
     END CASE;
     RETURN kernels;
   END kernels;

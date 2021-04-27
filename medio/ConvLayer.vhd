@@ -13,7 +13,6 @@ ENTITY ConvLayer IS
 
         datain : IN STD_LOGIC_VECTOR((grid(L) * 6) - 1 DOWNTO 0);
 
-        padding : IN STD_LOGIC_VECTOR(grid(L) - 1 DOWNTO 0);
         startLbuffer : IN STD_LOGIC;
         enableLbuffer : IN STD_LOGIC;
 
@@ -64,7 +63,6 @@ ARCHITECTURE rtl OF ConvLayer IS
         );
     END COMPONENT;
 
-    SIGNAL out_padding : STD_LOGIC_VECTOR((grid(L) * 6) - 1 DOWNTO 0);
     SIGNAL out_signedInverse : STD_LOGIC_VECTOR((grid(L) * 6) - 1 DOWNTO 0);
 
     SIGNAL out_teradder1 : STD_LOGIC_VECTOR(23 DOWNTO 0);
@@ -89,21 +87,9 @@ ARCHITECTURE rtl OF ConvLayer IS
     SIGNAL out_add : STD_LOGIC_VECTOR(15 DOWNTO 0);
 BEGIN
 
-    proc_padding : PROCESS (padding, datain)
-    BEGIN
-        FOR I IN 1 TO 9 LOOP
-            CASE padding(I - 1) IS
-                WHEN '1' =>
-                    out_padding((I * 6) - 1 DOWNTO (I * 6) - 6) <= datain((I * 6) - 1 DOWNTO (I * 6) - 6);
-                WHEN OTHERS =>
-                    out_padding((I * 6) - 1 DOWNTO (I * 6) - 6) <= (OTHERS => '0');
-            END CASE;
-        END LOOP;
-    END PROCESS proc_padding;
-
     sig_inv : FOR I IN 1 TO 9 GENERATE
         UX : signedInverse PORT MAP(
-            datain => out_padding((I * 6) - 1 DOWNTO (I * 6) - 6),
+            datain => datain((I * 6) - 1 DOWNTO (I * 6) - 6),
             Weights => Weights(I - 1),
             dataout => out_signedInverse((I * 6) - 1 DOWNTO (I * 6) - 6)
         );
