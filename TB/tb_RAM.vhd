@@ -10,21 +10,22 @@ architecture bench of RAM_tb is
   component RAM
       GENERIC (
           WL : INTEGER := 8;
-          bitsAddr : INTEGER := 64);
+          bitsAddress : INTEGER := 64);
       PORT (
           clk : IN STD_LOGIC;
-          oe : IN STD_LOGIC;
           we : IN STD_LOGIC;
           Din : IN STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
-          Addr : IN STD_LOGIC_VECTOR(bitsAddr - 1 DOWNTO 0);
+          rAddr : IN STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
+          wAddr : IN STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
+
           Dout : OUT STD_LOGIC_VECTOR(WL - 1 DOWNTO 0));
   end component;
 
   signal clk: STD_LOGIC;
-  signal oe: STD_LOGIC;
   signal we: STD_LOGIC;
   signal Din: STD_LOGIC_VECTOR(2 - 1 DOWNTO 0);
-  signal Addr: STD_LOGIC_VECTOR(2 - 1 DOWNTO 0);
+  signal addr: STD_LOGIC_VECTOR(2 - 1 DOWNTO 0);
+
   signal Dout: STD_LOGIC_VECTOR(2 - 1 DOWNTO 0);
 
   constant clock_period: time := 10 ns;
@@ -34,19 +35,19 @@ begin
 
   -- Insert values for generic parameters !!
   uut: RAM generic map ( WL       => 2,
-                         bitsAddr =>  2)
+                         bitsAddress =>  2)
               port map ( clk      => clk,
-                         oe       => oe,
                          we       => we,
                          Din      => Din,
-                         Addr     => Addr,
+                         rAddr     => Addr,
+                         wAddr     => Addr,
+
                          Dout     => Dout );
 
   stimulus: process
   begin
   
     -- Put initialisation code here
-    oe <= '0';
     we <= '0';
     Din <= "00";
     Addr <= "00";
@@ -66,12 +67,10 @@ begin
     wait for 10 ns;
 
     we <= '0';
-    oe <= '1';
     Addr <= "00";
 
     wait for 10 ns;
 
-    oe <= '1';
     Addr <= "11";
 
     wait for 10 ns;

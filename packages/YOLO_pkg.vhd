@@ -8,10 +8,6 @@ PACKAGE YOLO_pkg IS
 
   FUNCTION columns(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION memrows(layer : IN INTEGER := 1) RETURN INTEGER;
-
-  FUNCTION memcolumns(layer : INTEGER := 1) RETURN INTEGER;
-
   FUNCTION filters(layer : INTEGER := 1) RETURN INTEGER;
 
   FUNCTION channels(layer : INTEGER := 1) RETURN INTEGER;
@@ -24,10 +20,15 @@ PACKAGE YOLO_pkg IS
 
   FUNCTION bits(layer : INTEGER := 1) RETURN INTEGER;
 
+  FUNCTION weightbits(layer : INTEGER := 1) RETURN INTEGER;
+
   FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER;
+
+  FUNCTION weightsbitsAddress(layer : INTEGER := 1) RETURN INTEGER;
 
   FUNCTION bufferwidth(layer : INTEGER := 1) RETURN INTEGER;
 
+  FUNCTION delaymem(layer : INTEGER := 1) RETURN INTEGER;
 END YOLO_pkg;
 
 PACKAGE BODY YOLO_pkg IS
@@ -52,24 +53,6 @@ PACKAGE BODY YOLO_pkg IS
     RETURN rows;
   END rows;
 
-  FUNCTION memrows(layer : IN INTEGER := 1) RETURN INTEGER IS
-    VARIABLE memrows : INTEGER;
-  BEGIN
-    CASE layer IS
-      WHEN 1 =>
-        memrows := 208;
-      WHEN 2 =>
-        memrows := 104;
-      WHEN 3 =>
-        memrows := 52;
-      WHEN 4 =>
-        memrows := 26;
-      WHEN OTHERS =>
-        memrows := 13; --13
-    END CASE;
-    RETURN memrows;
-  END memrows;
-
   FUNCTION columns(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE columns : INTEGER;
   BEGIN
@@ -89,29 +72,12 @@ PACKAGE BODY YOLO_pkg IS
     END CASE;
     RETURN columns;
   END columns;
-
-  FUNCTION memcolumns(layer : INTEGER := 1) RETURN INTEGER IS
-    VARIABLE memcolumns : INTEGER;
-  BEGIN
-    CASE layer IS
-      WHEN 1 =>
-        memcolumns := 208;
-      WHEN 2 =>
-        memcolumns := 104;
-      WHEN 3 =>
-        memcolumns := 52;
-      WHEN 4 =>
-        memcolumns := 26;
-      WHEN OTHERS =>
-        memcolumns := 13; --13
-    END CASE;
-    RETURN memcolumns;
-  END memcolumns;
-
   FUNCTION filters(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE filters : INTEGER;
   BEGIN
     CASE layer IS
+      WHEN 0 =>
+        filters := 3;
       WHEN 1 =>
         filters := 16;
       WHEN 2 =>
@@ -121,7 +87,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 4 =>
         filters := 128;
       WHEN 5 =>
-        filters := 256; 
+        filters := 256;
       WHEN 6 =>
         filters := 512; --512
       WHEN 7 =>
@@ -149,7 +115,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 4 =>
         channels := 64;
       WHEN 5 =>
-        channels := 128; 
+        channels := 128;
       WHEN 6 =>
         channels := 256; --256
       WHEN 7 =>
@@ -168,6 +134,8 @@ PACKAGE BODY YOLO_pkg IS
     VARIABLE kernels : INTEGER;
   BEGIN
     CASE layer IS
+      WHEN 0 =>
+        kernels := 1;
       WHEN 1 =>
         kernels := 1;
       WHEN 2 =>
@@ -221,7 +189,19 @@ PACKAGE BODY YOLO_pkg IS
     RETURN bits;
   END bits;
 
-  FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER IS --DATOS INCOMPLETO
+  FUNCTION weightbits(layer : INTEGER := 1) RETURN INTEGER IS
+  VARIABLE weightbits : INTEGER;
+BEGIN
+  CASE layer IS
+    WHEN 9 =>
+      weightbits := 8;
+    WHEN OTHERS =>
+      weightbits := 1;
+  END CASE;
+  RETURN weightbits;
+END weightbits;
+
+  FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER IS --DATOS INCOMPLETOS??
     VARIABLE bitsAddress : INTEGER;
   BEGIN
     CASE layer IS
@@ -249,6 +229,34 @@ PACKAGE BODY YOLO_pkg IS
     RETURN bitsAddress;
   END bitsAddress;
 
+  FUNCTION weightsbitsAddress(layer : INTEGER := 1) RETURN INTEGER IS --DATOS INCOMPLETOS??
+  VARIABLE weightsbitsAddress : INTEGER;
+BEGIN
+  CASE layer IS
+    WHEN 1 =>
+      weightsbitsAddress := 6;
+    WHEN 2 =>
+      weightsbitsAddress := 9;
+    WHEN 3 =>
+      weightsbitsAddress := 11;
+    WHEN 4 =>
+      weightsbitsAddress := 13;
+    WHEN 5 =>
+      weightsbitsAddress := 15;
+    WHEN 6 =>
+      weightsbitsAddress := 17;
+    WHEN 7 =>
+      weightsbitsAddress := 19;
+    WHEN 8 =>
+      weightsbitsAddress := 20;
+    WHEN 9 =>
+      weightsbitsAddress := 17;
+    WHEN OTHERS =>
+      weightsbitsAddress := 11;
+  END CASE;
+  RETURN weightsbitsAddress;
+END weightsbitsAddress;
+
   FUNCTION bufferwidth(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE bufferwidth : INTEGER;
   BEGIN
@@ -270,11 +278,16 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 8 =>
         bufferwidth := 20;
       WHEN 9 =>
-        bufferwidth := 20;
+        bufferwidth := 28;
       WHEN OTHERS =>
         bufferwidth := 20;
     END CASE;
     RETURN bufferwidth;
   END bufferwidth;
 
+  FUNCTION delaymem(layer : INTEGER := 1) RETURN INTEGER IS
+  BEGIN
+    RETURN 11927567;
+  END delaymem;
 END YOLO_pkg;
+

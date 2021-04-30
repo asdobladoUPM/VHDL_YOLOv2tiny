@@ -8,8 +8,7 @@ ENTITY RAM IS
         bitsAddress : INTEGER := 64); -- Address Length
     PORT (
         clk : IN STD_LOGIC;
-        
-        oe : IN STD_LOGIC;
+
         we : IN STD_LOGIC;
 
         Din : IN STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
@@ -30,13 +29,12 @@ BEGIN
     BEGIN
         IF rising_edge(clk) THEN
 
+            Dout <= RAM_content(to_integer(unsigned(rAddr)));
+
             IF WE = '1' THEN
                 RAM_content(to_integer(unsigned(wAddr))) <= Din;
             END IF;
-
         END IF;
-    END PROCESS;
 
-    Dout <= RAM_content(to_integer(unsigned(rAddr))) WHEN oe = '1' ELSE (OTHERS => 'Z'); --mejor registrarla y sin OE ni Z
-
+END PROCESS;
 END arch;

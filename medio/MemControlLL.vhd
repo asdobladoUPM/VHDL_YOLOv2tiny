@@ -6,7 +6,7 @@ USE IEEE.MATH_REAL.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
-ENTITY MemControl IS
+ENTITY MemControlLL IS
     GENERIC (
         layer : INTEGER := 4);
     PORT (
@@ -18,23 +18,17 @@ ENTITY MemControl IS
 
         rMem : OUT INTEGER;
         rMemOdd : OUT STD_LOGIC;
-        address0 : OUT INTEGER;
-        address1 : OUT INTEGER;
-        address2 : OUT INTEGER;
-        padding : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
-        kernelCol : OUT INTEGER;
-        kernelRow : OUT INTEGER;
+        address : OUT INTEGER;
+        rbank : OUT INTEGER;
         validOut : OUT STD_LOGIC;
-
-        weightaddress : OUT INTEGER;
 
         weRAM : OUT STD_LOGIC;
         wMemOdd : OUT STD_LOGIC;
         wBank : OUT INTEGER;
         waddress : OUT INTEGER);
-END MemControl;
+END MemControlLL;
 
-ARCHITECTURE arch OF MemControl IS
+ARCHITECTURE arch OF MemControlLL IS
 
     --constantes
     CONSTANT Hc : INTEGER := columns(layer + 1);
@@ -52,8 +46,6 @@ ARCHITECTURE arch OF MemControl IS
     --señales lectura
     SIGNAL oe : STD_LOGIC;
 
-    SIGNAL s_kernelCol : INTEGER;
-    SIGNAL s_kernelRow : INTEGER;
     SIGNAL s_rmem : INTEGER;
 
     --señales lectura contadores
@@ -61,20 +53,15 @@ ARCHITECTURE arch OF MemControl IS
     SIGNAL rcount_row : INTEGER;
     SIGNAL rcount_ch : INTEGER;
     SIGNAL rcount_chMEM : INTEGER;
-    SIGNAL rcount_fil : INTEGER;
-
-    SIGNAL count_validout : INTEGER;
 
     --señales lectura dirección
     SIGNAL raddress : INTEGER;
+    SIGNAL s_rBank : INTEGER;
+    SIGNAL s_rBankOffset : INTEGER;
+
     SIGNAL rbase : INTEGER;
     SIGNAL rdir_deadline : INTEGER;
-    CONSTANT raddOffset : INTEGER := (INTEGER(ceil(real(Hc/3))) + 1) * (Ch/K);
-    SIGNAL addrOffrow0 : INTEGER;
-    SIGNAL addrOffrow1 : INTEGER;
     SIGNAL addcount_row : INTEGER;
-
-    signal sweightaddress: INTEGER;
 
     --señales escritura
     SIGNAL s_wbank : INTEGER;
@@ -100,45 +87,36 @@ BEGIN
     waddress <= s_waddress;
 
     --LECTURA
-    kernelCol <= s_kernelCol;
-    kernelrow <= s_kernelRow;
     rmem <= s_rmem;
     rmemodd <= NOT(s_wmemodd);
-
-    address0 <= raddress + addrOffrow0;
-    address1 <= raddress + addrOffrow1;
-    address2 <= raddress;
-    weightaddress <= sweightaddress;
+    address <= raddress;
+    rbank <= s_rBank;
 
     clk_proc : PROCESS (clk, reset)
     BEGIN
         IF reset = '0' THEN
 
-            Sweightaddress <= 0;
-
             count_delay <= 0;
-            delay <=(layer + 1) * delaymem(layer);
+            delay <= 100;--(layer + 1) * delaymem(layer);
 
             --lectura
             validOut <= '0';
 
             oe <= '0';
 
-            rcount_col <= - 2; --desfase
+            rcount_col <= - 1;
             rcount_ch <= 0;
             rcount_chMEM <= 0;
 
-            rcount_fil <= 0;
             rcount_row <= 0;
-            count_validout <= 0;
 
             s_rmem <= 0;
-            s_kernelCol <= 2; --desfase
-            s_kernelrow <= 1; --el cero esta en la f1 del kernel
+            s_rBank <= - 1;
+            s_rBankOffset <= 0;
 
             raddress <= 0;
             rbase <= 0;
-            rdir_deadline <= - 2;
+            rdir_deadline <= - 1;
             addcount_row <= 0;
 
             --escritura
@@ -205,49 +183,50 @@ BEGIN
             --lectura
 
             IF oe = '1' THEN
-                --validOut
-                count_validout <= count_validout + 1;
-                IF rcount_col = (Hc - 1) THEN
-                    validOut <= '0';
-                ELSIF count_validout >= 1 THEN
-                    validOut <= '1';
-                    count_validout <= 1;
-                END IF;
+
+                validOut <= '1';
 
                 --direccionymem
                 rdir_deadline <= rdir_deadline + 1;
+                s_rBank <= s_rBank + 1;
 
                 IF rdir_deadline = 2 THEN
                     raddress <= raddress + 1;
                     rdir_deadline <= 0;
+                    s_rBank <= s_rBankOffset;
                 END IF;
 
                 IF rcount_col = Hc - 1 THEN --cambia de canal (ya incluye +1 col de padding)
                     raddress <= raddress + 1;
-                    rdir_deadline <= - 1;
+                    rdir_deadline <= 0;
                     rcount_chMEM <= rcount_chMEM + 1;
+                    s_rBank <= s_rBankOffset;
                     IF rcount_chMEM = Ch/K - 1 THEN --cambia de memoria AQUI ESTA EL PROBLEMA NO ES SOLO F/K -1 SINO TODOS LOS MÚLTIPLOS
                         rcount_chMEM <= 0;
                         raddress <= rbase;
-                        rdir_deadline <= - 1;
+                        rdir_deadline <= 0;
                         s_rmem <= s_rmem + 1;
                         IF s_rmem = K - 1 THEN ---cambia de fila y de memoria
                             raddress <= rbase;
-                            rdir_deadline <= - 1;
+                            rdir_deadline <= 0;
                             s_rmem <= 0;
-                            IF rcount_fil = Fnext/Knext - 1 THEN
-
-                                addcount_row <= addcount_row + 1;
-                                IF addcount_row = 2 THEN
-                                    rbase <= raddress + 1;
-                                    addcount_row <= 0;
-                                END IF;
-                                IF rcount_row = Hr - 1 THEN -- ultimo dato
-                                    rbase <= 0;
-                                    raddress <= 0;
-                                    rdir_deadline <= - 2;
-                                    addcount_row <= 0;
-                                END IF;
+                            addcount_row <= addcount_row + 1;
+                            s_rBankOffset <= s_rBankOffset + 3;
+                            s_rBank <= s_rBankOffset + 3;
+                            IF s_rBankOffset = 6 THEN
+                                s_rBankOffset <= 0;
+                                s_rBank <= 0;
+                            END IF;
+                            IF addcount_row = 2 THEN
+                                rbase <= raddress + 1;
+                                raddress <= raddress + 1;
+                                addcount_row <= 0;
+                            END IF;
+                            IF rcount_row = Hr - 1 THEN -- ultimo dato
+                                rbase <= 0;
+                                raddress <= 0;
+                                rdir_deadline <= - 2;
+                                addcount_row <= 0;
                             END IF;
                         END IF;
 
@@ -257,53 +236,20 @@ BEGIN
                 --contadores lectura
                 rcount_col <= rcount_col + 1;
                 IF rcount_col = Hc - 1 THEN --cambia de canal (incluye +1 col de padding)
-                    rcount_col <= - 1;
+                    rcount_col <= 0;
                     rcount_ch <= rcount_ch + 1;
-                    Sweightaddress <= Sweightaddress + 1;
-
-                    IF rcount_ch = Ch - 1 THEN --cambia de filtro
+                    IF rcount_ch = Ch - 1 THEN --cambia de memoria
                         rcount_ch <= 0;
-                        rcount_fil <= rcount_fil + 1;
-                        
-                        IF rcount_fil = Fnext/Knext - 1 THEN ---cambia de fila 
+                        IF s_rmem = K - 1 THEN ---cambia de fila 
                             rcount_row <= rcount_row + 1;
-                            Sweightaddress <= 0;
-
-                            rcount_fil <= 0;
                             IF rcount_row = Hr - 1 THEN -- ultimo dato
                                 rcount_row <= 0;
-                                rcount_col <= - 2;
+                                rcount_col <= - 1;
                                 rcount_ch <= 0;
-                                Sweightaddress <= 0;
                                 s_rmem <= 0;
-                                count_validout <= 0;
-                                validOut <= '0';
                                 oe <= '0';
                             END IF;
                         END IF;
-                    END IF;
-                END IF;
-
-                --kernelCol y Row
-                CASE s_kernelCol IS
-                    WHEN 0 => s_kernelCol <= 1;
-                    WHEN 1 => s_kernelCol <= 2;
-                    WHEN 2 => s_kernelCol <= 0;
-                    WHEN OTHERS => s_kernelCol <= 0;
-                END CASE;
-
-                IF rcount_col = Hc - 1 THEN --cambia de canal
-                    s_kernelCol <= 0;
-                END IF;
-
-                IF s_rmem = K - 1 AND rcount_fil = (Fnext/Knext) - 1 AND rcount_ch = Ch - 1 AND rcount_col = Hc - 1 THEN ---cambia de fila
-                    s_kernelrow <= s_kernelrow - 1;
-                    IF s_kernelrow = 0 THEN
-                        s_kernelrow <= 2;
-                    END IF;
-                    IF rcount_row = Hr - 1 THEN -- ultimo dato
-                        s_kernelrow <= 1;
-                        s_kernelCol <= 2;
                     END IF;
                 END IF;
             ELSE
@@ -311,57 +257,4 @@ BEGIN
             END IF;
         END IF;
     END PROCESS clk_proc;
-
-    --ReadingAddressOffsets
-    addressOffsets : PROCESS (s_kernelRow, rcount_row)
-    BEGIN
-
-        CASE s_kernelRow IS
-            WHEN 0 =>
-                addrOffrow0 <= 0;
-                addrOffrow1 <= 0;
-            WHEN 1 =>
-                addrOffrow0 <= raddOffset;
-                addrOffrow1 <= raddOffset;
-            WHEN 2 =>
-                addrOffrow0 <= raddOffset;
-                addrOffrow1 <= 0;
-            WHEN OTHERS =>
-                addrOffrow0 <= 0;
-                addrOffrow1 <= 0;
-        END CASE;
-
-        IF rcount_row = 0 THEN
-            addrOffrow0 <= 0;
-            addrOffrow1 <= 0;
-        END IF;
-    END PROCESS addressOffsets;
-
-    --padding
-    padding_proc : PROCESS (rcount_row, rcount_col, rcount_ch, s_rmem)
-    BEGIN
-        IF rcount_col =- 2 THEN
-            padding <= "111";
-        ELSIF rcount_col = Hc - 1 THEN
-            padding <= "111";
-        ELSIF rcount_row = 0 THEN
-            padding <= "100";
-            IF rcount_col = Hc THEN
-                padding <= "000";
-            END IF;
-        ELSIF rcount_row = Hr - 1 THEN
-            padding <= "001";
-            IF rcount_col = Hc THEN
-                padding <= "001";
-                IF rcount_ch = Ch/K - 1 AND s_rmem = K - 1 THEN
-                    padding <= "100";
-                END IF;
-            END IF;
-        ELSIF rcount_row = Hr - 2 AND rcount_col = Hc THEN
-            padding <= "001";
-        ELSE
-            padding <= "000";
-        END IF;
-
-    END PROCESS padding_proc;
 END arch;

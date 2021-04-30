@@ -1,66 +1,68 @@
 --Delay implemented with memories.
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
-use IEEE.MATH_REAL.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE IEEE.MATH_REAL.ALL;
 
-library work;
-use work.Components.ALL;
+LIBRARY work;
+USE work.Components.ALL;
+USE work.YOLO_pkg.ALL;
 
-entity DelayMem is
-	generic(	
-	  WL: integer:= 8;			-- Word Length
-	  BL: integer:= 64);		   -- Buffer Length
-	port(
-	  rst:  in  std_logic;
-	  clk:  in  std_logic;
-	  Din:  in  std_logic_vector(WL -1 downto 0); 
-	  Dout: out std_logic_vector(WL -1 downto 0));
-end DelayMem;
+ENTITY DelayMem IS
+   GENERIC (Layer : INTEGER := 1);
+   PORT (
+      reset : IN STD_LOGIC;
+      clk : IN STD_LOGIC;
+      enable : IN STD_LOGIC;
+      Din : IN STD_LOGIC_VECTOR(bufferwidth(layer) - 1 DOWNTO 0);
+      Dout : OUT STD_LOGIC_VECTOR(bufferwidth(layer) - 1 DOWNTO 0));
+END DelayMem;
+ARCHITECTURE arch OF DelayMem IS
 
+   CONSTANT WL : INTEGER := bufferwidth(layer); -- Word Length
+   CONSTANT BL : INTEGER := channels(layer); -- Buffer Length
+BEGIN
 
-architecture arch of DelayMem is
+   NoDelay : IF BL = 0 GENERATE
+      Dout <= Din;
+   END GENERATE;
 
-begin 
+   GenMem : IF BL > 0 GENERATE
 
-   NoDelay: if BL = 0 generate   
-         Dout <= Din;
-   end generate;
+      TYPE memory IS ARRAY (nextPow2(BL) - 1 DOWNTO 0) OF STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
+      SIGNAL mem : memory;
+      SIGNAL rdData : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
+      SIGNAL counter : unsigned(bits(BL - 1) - 1 DOWNTO 0);
 
-   GenMem: if BL > 0 generate
-      
-      type memory is array (nextPow2(BL) -1 downto 0) of std_logic_vector(WL -1 downto 0);
-      signal mem: memory;      
-      signal rdData:  std_logic_vector(WL - 1 downto 0);
-      signal counter: unsigned(bits(BL-1) -1 downto 0);
-   
-   begin   
-   
-      Control: process(rst, clk)
-         begin
-            if rst = '1' then
-               counter <= (others => '0');
-            elsif rising_edge(clk) then
-               if counter = to_unsigned(BL -1 -1,bits(BL-1)) then  
-                  counter <= (others =>'0');
-               else
+   BEGIN
+
+      Control : PROCESS (reset, clk)
+      BEGIN
+         IF reset = '0' THEN
+            counter <= (OTHERS => '0');
+         ELSIF rising_edge(clk) THEN
+            IF enable = '1' THEN
+               IF counter = to_unsigned(BL - 1 - 1, bits(BL - 1)) THEN
+                  counter <= (OTHERS => '0');
+               ELSE
                   counter <= counter + 1;
-               end if;
-            end if;
-      end process;
-         
-   
-      RW: process(clk)
-         begin
-            if rising_edge(clk) then
+               END IF;
+            END IF;
+         END IF;
+      END PROCESS;
+      RW : PROCESS (clk)
+      BEGIN
+         IF rising_edge(clk) THEN
+            IF enable = '1' THEN
                mem(to_integer(counter)) <= Din;
-               Dout <= rdData; 	            
-            end if;
-      end process;
-          
-      rdData <= mem(to_integer(counter));               
-   
-   end generate;
+            END IF;
+            Dout <= rdData;
+         END IF;
+      END PROCESS;
 
-end arch;
+      rdData <= mem(to_integer(counter));
+
+   END GENERATE;
+
+END arch;

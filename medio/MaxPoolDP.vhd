@@ -2,43 +2,44 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 
-ENTITY MPLayer IS
+LIBRARY work;
+USE work.YOLO_pkg.ALL;
+
+ENTITY MaxPoolDP IS
     GENERIC (
-        BL : INTEGER := 10;  --------------debe ser Hc*Ch/2 para step 2 y (Hc-1)*Ch para step 1????????????
-        WL : INTEGER := 6
-    );
+        Layer : INTEGER := 1);
     PORT (
-        clk, reset : IN STD_LOGIC;
+    clk, reset : IN STD_LOGIC;
 
-        val_d1 : IN STD_LOGIC;
-        val_d2 : IN STD_LOGIC;
-        enLBuffer : IN STD_LOGIC;
+    val_d1 : IN STD_LOGIC;
+    enLBuffer : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
+    datain : IN STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0);
 
-        dataout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
+    dataout : OUT STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0)
     );
-END ENTITY MPLayer;
+END ENTITY MaxPoolDP;
 
-ARCHITECTURE rtl OF MPLayer IS
+ARCHITECTURE rtl OF MaxPoolDP IS
+
+    CONSTANT rst_val : STD_LOGIC := '0';
+    CONSTANT WL : INTEGER := bits(layer); -- Word Length
+    CONSTANT BL : INTEGER := ((filters(layer)/kernels(layer))*columns(layer)/2)-1;  --mas?
 
     COMPONENT LinealBuffer
         GENERIC (
-            BL : INTEGER;
-            WL : INTEGER
+            BL : INTEGER := 1; -- Buffer Length
+            WL : INTEGER := 1 -- Word Length
         );
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-
             enable_LBuffer : IN STD_LOGIC;
             datain : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
-
             dataout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
         );
     END COMPONENT;
 
-    CONSTANT rst_val : STD_LOGIC := '0';
     SIGNAL zeroes : STD_LOGIC_VECTOR((WL - 2) DOWNTO 0);
 
     SIGNAL s_datain : SIGNED((WL - 1) DOWNTO 0);

@@ -4,8 +4,8 @@ USE ieee.numeric_std.ALL;
 
 ENTITY LinealBuffer IS
     GENERIC (
-        BL : INTEGER := 10;
-        WL : INTEGER := 10
+        BL : INTEGER := 1;-- Buffer Length
+        WL : INTEGER := 1-- Word Length
     );
     PORT (
         clk : IN STD_LOGIC;
@@ -17,7 +17,6 @@ ENTITY LinealBuffer IS
 END ENTITY LinealBuffer;
 
 ARCHITECTURE rtl OF LinealBuffer IS
-
     TYPE mem_t IS ARRAY(0 TO (BL - 1)) OF STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
 
     SIGNAL content_LB : mem_t;
@@ -30,6 +29,7 @@ BEGIN
         IF reset = res_val THEN
 
             content_LB <= (OTHERS => (OTHERS => '0'));
+            dataout <= (OTHERS => '0');
 
         ELSIF rising_edge(clk) THEN
             IF (enable_LBuffer = '1') THEN
@@ -39,10 +39,11 @@ BEGIN
                 END LOOP;
 
                 content_LB(0) <= datain;
+                dataout <=content_LB(BL - 1);
+
             END IF;
         END IF;
 
     END PROCESS moving;
-    dataout <= content_LB(BL - 1);
 
 END ARCHITECTURE rtl;

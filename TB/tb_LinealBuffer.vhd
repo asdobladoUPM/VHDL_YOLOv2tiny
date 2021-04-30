@@ -9,15 +9,15 @@ ARCHITECTURE bench OF LinealBuffer_tb IS
 
     COMPONENT LinealBuffer
         GENERIC (
-            L : INTEGER := 10;
-            W : INTEGER := 10
+            BL : INTEGER := 10;
+            WL : INTEGER := 10
         );
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
             enable_LBuffer : IN STD_LOGIC;
-            datain : IN STD_LOGIC_VECTOR((W - 1) DOWNTO 0);
-            dataout : OUT STD_LOGIC_VECTOR((W - 1) DOWNTO 0)
+            datain : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
+            dataout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
         );
     END COMPONENT;
 
@@ -33,8 +33,8 @@ BEGIN
 
     -- Insert values for generic parameters !!
     uut : LinealBuffer GENERIC MAP(
-        L => 4,
-        W => 2)
+        BL => 4,
+        WL => 2)
     PORT MAP(
         clk => clk,
         reset => reset,
@@ -54,7 +54,7 @@ BEGIN
         -- Put test bench stimulus code here
         reset <= '1';
         enable_LBuffer <= '1';
-        datain <= "00";
+        datain <= "01";
         WAIT FOR clock_period;
         enable_LBuffer <= '1';
         datain <= "11";

@@ -45,12 +45,8 @@ BEGIN
         reset <= '1';
         WAIT FOR 10 ns;
 
-        FOR I IN 1 TO 500000 LOOP
-            start <= '0';
-            WAIT FOR 10 ns;
-            start <= '1';
-            WAIT FOR 2080 ns;
-        END LOOP;
+start<= '1';
+        WAIT;
 
         -- Put test bench stimulus code here
 

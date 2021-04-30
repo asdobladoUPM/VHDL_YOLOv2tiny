@@ -35,7 +35,7 @@ BEGIN
 
     -- Insert values for generic parameters !!
     uut : MPcontrol GENERIC MAP(
-        Layer => 6)
+        Layer => 5)
     PORT MAP(
         clk => clk,
         reset => reset,
@@ -68,7 +68,7 @@ BEGIN
 
         validIn <= '1';
         
-        wait for 5 us;
+        wait for 500000000 us;
 
         stop_the_clock <= true;
         WAIT;

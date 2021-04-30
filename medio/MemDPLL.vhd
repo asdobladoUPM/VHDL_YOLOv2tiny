@@ -5,20 +5,18 @@ USE IEEE.NUMERIC_STD.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
-ENTITY MemLayer IS
+ENTITY MemDPLL IS
     GENERIC (
         layer : INTEGER := 4);
     PORT (
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
-        oe : IN STD_LOGIC;
         rMem : IN INTEGER;
         rMemOdd : IN STD_LOGIC;
         address0 : IN INTEGER;
         address1 : IN INTEGER;
         address2 : IN INTEGER;
-
         padding : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
         kernelCol : IN INTEGER;
         kernelRow : IN INTEGER;
@@ -29,10 +27,11 @@ ENTITY MemLayer IS
         wBank : IN INTEGER;
         waddress : IN INTEGER;
 
-        Dout : OUT STD_LOGIC_VECTOR((9 * bits(layer)) - 1 DOWNTO 0));
-END MemLayer;
+        Dout : OUT STD_LOGIC_VECTOR((9 * bits(layer)) - 1 DOWNTO 0)
+        Weights: OUT std_logic_vector(8 downto 0));
+END MemDPLL;
 
-ARCHITECTURE arch OF MemLayer IS
+ARCHITECTURE arch OF MemDPLL IS
 
     CONSTANT bits : INTEGER := bits(layer);
     CONSTANT bitsAddress : INTEGER := bitsAddress(layer);
@@ -59,7 +58,7 @@ ARCHITECTURE arch OF MemLayer IS
             bitsAddress : INTEGER := 64); -- Address Length
         PORT (
             clk : IN STD_LOGIC;
-            oe : IN STD_LOGIC;
+
             we : IN STD_LOGIC;
 
             Din : IN STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
@@ -72,10 +71,6 @@ ARCHITECTURE arch OF MemLayer IS
     SIGNAL DataOutRAM : STD_LOGIC_VECTOR((grid(layer) * bits) - 1 DOWNTO 0);
     SIGNAL DataOutRAModd : STD_LOGIC_VECTOR((grid(layer) * bits) - 1 DOWNTO 0);
     SIGNAL DataOutRAMeven : STD_LOGIC_VECTOR((grid(layer) * bits) - 1 DOWNTO 0);
-
-    SIGNAL oeRAModd : STD_LOGIC_VECTOR(8 DOWNTO 0);
-    SIGNAL oeRAMeven : STD_LOGIC_VECTOR(8 DOWNTO 0);
-    SIGNAL oeEXT : STD_LOGIC_VECTOR(8 DOWNTO 0);
 
     SIGNAL weRAModd : STD_LOGIC_VECTOR(8 DOWNTO 0);
     SIGNAL weEXT : STD_LOGIC_VECTOR(8 DOWNTO 0);
@@ -92,11 +87,6 @@ ARCHITECTURE arch OF MemLayer IS
     SIGNAL std_address2 : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
 
 BEGIN
-    oeEXT <= (OTHERS => oe);
-    rmemoddEXT <= (OTHERS => rmemodd);
-    oeRAModd <= oeEXT AND rmemoddEXT AND std_rmem;
-    oeRAMeven <= oeEXT AND (NOT(rmemoddEXT)) AND std_rmem;
-
     weEXT <= (OTHERS => we);
     wMemOddEXT <= (OTHERS => wmemodd);
     weRAModd <= weEXT AND weBank AND wMemOddEXT;
@@ -121,17 +111,17 @@ BEGIN
 
             mem_odd : RAM GENERIC MAP(WL => bits, bitsAddress => bitsAddress)
             PORT MAP(
-                clk => clk, oe => oeRAModd(I), we => weRAModd(J),
+                clk => clk, we => weRAModd(J),
                 Din => Din((I + 1) * bits - 1 DOWNTO I * bits),
-                rAddr => std_raddress((J + 1) * bits - 1 DOWNTO J * bits),
+                rAddr => std_raddress((J + 1) * bitsAddress - 1 DOWNTO J * bitsAddress),
                 wAddr => std_waddress,
                 Dout => DataOutRAModd(((J + 1) * bits) - 1 DOWNTO J * bits));
 
             mem_even : RAM GENERIC MAP(WL => bits, bitsAddress => bitsAddress)
             PORT MAP(
-                clk => clk, oe => oeRAMeven(I), we => weRAMeven(J),
+                clk => clk, we => weRAMeven(J),
                 Din => Din((I + 1) * bits - 1 DOWNTO I * bits),
-                rAddr => std_raddress((J + 1) * bits - 1 DOWNTO J * bits),
+                rAddr => std_raddress((J + 1) * bitsAddress - 1 DOWNTO J * bitsAddress),
                 wAddr => std_waddress,
                 Dout => DataOutRAMeven(((J + 1) * bits) - 1 DOWNTO J * bits));
         END GENERATE mem_gen;
@@ -169,7 +159,7 @@ BEGIN
         END CASE;
     END PROCESS rmem_proc;
 
-    dataout_proc : PROCESS (rmemodd)
+    dataout_proc : PROCESS (rmemodd,DataOutRAModd,DataOutRAMeven)
     BEGIN
         CASE rmemodd IS
             WHEN '1' =>

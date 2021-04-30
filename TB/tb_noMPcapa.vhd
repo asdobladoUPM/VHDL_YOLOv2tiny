@@ -41,12 +41,16 @@ BEGIN
         reset <= '0';
         start <= '0';
 
-            WAIT FOR 45 ns;
-            reset <= '1';
+        WAIT FOR 35 ns;
+        reset <= '1';
+        WAIT FOR 10 ns;
 
-        start <= '1';
-
-        WAIT FOR 5000000 us;
+        FOR I IN 1 TO 5000000 LOOP
+            start <= '0';
+            WAIT FOR 10 ns;
+            start <= '1';
+            WAIT FOR 130 ns;
+        END LOOP;
 
         -- Put test bench stimulus code here
 

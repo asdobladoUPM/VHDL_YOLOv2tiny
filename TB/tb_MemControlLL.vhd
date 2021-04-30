@@ -2,12 +2,12 @@ LIBRARY IEEE;
 USE IEEE.Std_logic_1164.ALL;
 USE IEEE.Numeric_Std.ALL;
 
-ENTITY MemControl_tb IS
+ENTITY MemControlLL_tb IS
 END;
 
-ARCHITECTURE bench OF MemControl_tb IS
+ARCHITECTURE bench OF MemControlLL_tb IS
 
-  COMPONENT MemControl
+  COMPONENT MemControlLL
     GENERIC (
       layer : INTEGER := 1);
     PORT (
@@ -17,14 +17,7 @@ ARCHITECTURE bench OF MemControl_tb IS
       we : IN STD_LOGIC;
       rMem : OUT INTEGER;
       rMemOdd : OUT STD_LOGIC;
-      address0 : OUT INTEGER;
-      address1 : OUT INTEGER;
-      address2 : OUT INTEGER;
-              weightaddress : OUT INTEGER;
-
-      padding : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
-      kernelCol : OUT INTEGER;
-      kernelRow : OUT INTEGER;
+      address : OUT INTEGER;
       weRAM : OUT STD_LOGIC;
       wMemOdd : OUT STD_LOGIC;
       wBank : OUT INTEGER;
@@ -39,14 +32,7 @@ ARCHITECTURE bench OF MemControl_tb IS
 
   SIGNAL rMem : INTEGER;
   SIGNAL rMemOdd : STD_LOGIC;
-  SIGNAL address0 : INTEGER;
-  SIGNAL address1 : INTEGER;
-  SIGNAL address2 : INTEGER;
-    SIGNAL weightaddress : INTEGER;
-
-  SIGNAL padding : STD_LOGIC_VECTOR(2 DOWNTO 0);
-  SIGNAL kernelCol : INTEGER;
-  SIGNAL kernelRow : INTEGER;
+  SIGNAL address : INTEGER;
   SIGNAL weRAM : STD_LOGIC;
   SIGNAL wMemOdd : STD_LOGIC;
   SIGNAL wBank : INTEGER;
@@ -59,7 +45,7 @@ ARCHITECTURE bench OF MemControl_tb IS
 BEGIN
 
   -- Insert values for generic parameters !!
-  uut : MemControl GENERIC MAP(layer => 8)
+  uut : MemControlLL GENERIC MAP(layer => 9)
   PORT MAP(
     clk => clk,
     reset => reset,
@@ -67,14 +53,7 @@ BEGIN
     we => we,
     rMem => rMem,
     rMemOdd => rMemOdd,
-    address0 => address0,
-    address1 => address1,
-    address2 => address2,
-        weightaddress => weightaddress,
-
-    padding => padding,
-    kernelCol => kernelCol,
-    kernelRow => kernelRow,
+    address => address,
     weRAM => weRAM,
     wMemOdd => wMemOdd,
     wBank => wBank,

@@ -4,12 +4,12 @@ USE ieee.std_logic_1164.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
-ENTITY tb_MemLayer IS
-END tb_MemLayer;
+ENTITY tb_MemDP IS
+END tb_MemDP;
 
-ARCHITECTURE tb OF tb_MemLayer IS
+ARCHITECTURE tb OF tb_MemDP IS
 
-    COMPONENT MemLayer
+    COMPONENT MemDP
         GENERIC (
             layer : INTEGER := 1);
         PORT (
@@ -56,7 +56,7 @@ ARCHITECTURE tb OF tb_MemLayer IS
 
 BEGIN
 
-    dut : MemLayer GENERIC MAP(layer => 10)
+    dut : MemDP GENERIC MAP(layer => 10)
     PORT MAP(
         clk => clk,
         reset => reset,
@@ -147,7 +147,7 @@ END tb;
 
 -- Configuration block below is required by some simulators. Usually no need to edit.
 
-CONFIGURATION cfg_tb_MemLayer OF tb_MemLayer IS
+CONFIGURATION cfg_tb_MemLayer OF tb_MemDP IS
     FOR tb
     END FOR;
 END cfg_tb_MemLayer;
