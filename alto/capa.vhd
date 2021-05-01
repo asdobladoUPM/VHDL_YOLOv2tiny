@@ -5,6 +5,10 @@ USE IEEE.numeric_std.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--Aquí se comprueba la sincronización: 
+--Lectura-Convolución-MaxPooling-Escritura
+-- y se cuenta el número de escrituras realizada por una capa
+
 ENTITY capa IS
     GENERIC (layer : INTEGER := 2);
     PORT (
@@ -83,7 +87,6 @@ ARCHITECTURE rtl OF capa IS
     SIGNAL outCV : STD_LOGIC;
     SIGNAL outMP : STD_LOGIC;
 
-    SIGNAL read_count : INTEGER;
     SIGNAL write_count : INTEGER;
 BEGIN
 
@@ -116,7 +119,7 @@ BEGIN
         validOut => outCV);
 
     MPL : MPControl
-    GENERIC MAP(Layer => layer) --X EL NUMERO DE F
+    GENERIC MAP(Layer => layer)
     PORT MAP(
         clk => clk,
         reset => reset,
@@ -147,11 +150,8 @@ BEGIN
     proc_name : PROCESS (clk, reset)
     BEGIN
         IF reset = '0' THEN
-            read_count <= 0;
             write_count <= 0;
         ELSIF rising_edge(clk) THEN
-
-
             IF outMP = '1' THEN
                 write_count <= write_count + 1;
             END IF;

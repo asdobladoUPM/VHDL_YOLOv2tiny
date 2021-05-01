@@ -10,8 +10,8 @@ USE work.YOLO_pkg.ALL;
 
 ENTITY DelayMem IS
    GENERIC (
-      BL : INTEGER := 1;-- Buffer Length
-      WL : INTEGER := 1-- Word Length
+      BL : INTEGER := 1;-- Longitud del buffer
+      WL : INTEGER := 1-- Ancho de palabra
    );
    PORT (
       clk : IN STD_LOGIC;

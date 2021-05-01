@@ -16,13 +16,11 @@ BEGIN
     leaky : PROCESS (datain)
     BEGIN
         CASE datain(15) IS
-            WHEN '0' =>
-                dataout <= datain;
+            WHEN '0' => --si es positivo
+                dataout <= datain; --salida tal cual
 
-            WHEN OTHERS =>
-                dataout <= datain(15) & datain(15) & datain(15) & datain(15 DOWNTO 3);
-
+            WHEN OTHERS => -- si es negativo
+                dataout <= datain(15) & datain(15) & datain(15) & datain(15 DOWNTO 3); --se multiplica x0.125
         END CASE;
-
     END PROCESS leaky;
 END ARCHITECTURE rtl;
