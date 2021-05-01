@@ -29,8 +29,8 @@ PACKAGE YOLO_pkg IS
   FUNCTION bufferwidth(layer : INTEGER := 1) RETURN INTEGER;
 
   FUNCTION delaymem(layer : INTEGER := 1) RETURN INTEGER;
-  
-  function log (L: INTEGER) return INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
+
+  FUNCTION log (L : INTEGER) RETURN INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
 
 END YOLO_pkg;
 
@@ -75,6 +75,7 @@ PACKAGE BODY YOLO_pkg IS
     END CASE;
     RETURN columns;
   END columns;
+
   FUNCTION filters(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE filters : INTEGER;
   BEGIN
@@ -100,7 +101,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         filters := 128;
       WHEN OTHERS =>
-        filters := 6; --0
+        filters := 128; --0
     END CASE;
     RETURN filters;
   END filters;
@@ -128,7 +129,7 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 9 =>
         channels := 1024;
       WHEN OTHERS =>
-        channels := 3; --0
+        channels := 1024; --0
     END CASE;
     RETURN channels;
   END channels;
@@ -193,21 +194,23 @@ PACKAGE BODY YOLO_pkg IS
   END bits;
 
   FUNCTION weightbits(layer : INTEGER := 1) RETURN INTEGER IS
-  VARIABLE weightbits : INTEGER;
-BEGIN
-  CASE layer IS
-    WHEN 9 =>
-      weightbits := 8;
-    WHEN OTHERS =>
-      weightbits := 1;
-  END CASE;
-  RETURN weightbits;
-END weightbits;
+    VARIABLE weightbits : INTEGER;
+  BEGIN
+    CASE layer IS
+      WHEN 9 =>
+        weightbits := 8;
+      WHEN OTHERS =>
+        weightbits := 1;
+    END CASE;
+    RETURN weightbits;
+  END weightbits;
 
   FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER IS --DATOS INCOMPLETOS??
     VARIABLE bitsAddress : INTEGER;
   BEGIN
     CASE layer IS
+      WHEN 0 =>
+        bitsAddress := 17;
       WHEN 1 =>
         bitsAddress := 17;
       WHEN 2 =>
@@ -233,32 +236,32 @@ END weightbits;
   END bitsAddress;
 
   FUNCTION weightsbitsAddress(layer : INTEGER := 1) RETURN INTEGER IS --DATOS INCOMPLETOS??
-  VARIABLE weightsbitsAddress : INTEGER;
-BEGIN
-  CASE layer IS
-    WHEN 1 =>
-      weightsbitsAddress := 6;
-    WHEN 2 =>
-      weightsbitsAddress := 9;
-    WHEN 3 =>
-      weightsbitsAddress := 11;
-    WHEN 4 =>
-      weightsbitsAddress := 13;
-    WHEN 5 =>
-      weightsbitsAddress := 15;
-    WHEN 6 =>
-      weightsbitsAddress := 17;
-    WHEN 7 =>
-      weightsbitsAddress := 19;
-    WHEN 8 =>
-      weightsbitsAddress := 20;
-    WHEN 9 =>
-      weightsbitsAddress := 17;
-    WHEN OTHERS =>
-      weightsbitsAddress := 11;
-  END CASE;
-  RETURN weightsbitsAddress;
-END weightsbitsAddress;
+    VARIABLE weightsbitsAddress : INTEGER;
+  BEGIN
+    CASE layer IS
+      WHEN 1 =>
+        weightsbitsAddress := 6;
+      WHEN 2 =>
+        weightsbitsAddress := 9;
+      WHEN 3 =>
+        weightsbitsAddress := 11;
+      WHEN 4 =>
+        weightsbitsAddress := 13;
+      WHEN 5 =>
+        weightsbitsAddress := 15;
+      WHEN 6 =>
+        weightsbitsAddress := 17;
+      WHEN 7 =>
+        weightsbitsAddress := 19;
+      WHEN 8 =>
+        weightsbitsAddress := 20;
+      WHEN 9 =>
+        weightsbitsAddress := 17;
+      WHEN OTHERS =>
+        weightsbitsAddress := 11;
+    END CASE;
+    RETURN weightsbitsAddress;
+  END weightsbitsAddress;
 
   FUNCTION bufferwidth(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE bufferwidth : INTEGER;
@@ -292,16 +295,15 @@ END weightsbitsAddress;
   BEGIN
     RETURN 11927567;
   END delaymem;
-  
-  function log (L: INTEGER) return INTEGER is
-begin
-	for i in 0 to 100 loop
-		if L < 2**i then
-			return i;
-		end if;
-	end loop;
-	
-	return -1;
-end;
-END YOLO_pkg;
 
+  FUNCTION log (L : INTEGER) RETURN INTEGER IS
+  BEGIN
+    FOR i IN 0 TO 100 LOOP
+      IF L < 2 ** i THEN
+        RETURN i;
+      END IF;
+    END LOOP;
+
+    RETURN -1;
+  END;
+END YOLO_pkg;

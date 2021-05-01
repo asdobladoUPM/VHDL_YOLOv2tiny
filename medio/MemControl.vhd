@@ -6,6 +6,8 @@ USE IEEE.MATH_REAL.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--Bloque de control para la memoria
+
 ENTITY MemControl IS
     GENERIC (
         layer : INTEGER := 4);
@@ -16,22 +18,22 @@ ENTITY MemControl IS
 
         we : IN STD_LOGIC;
 
-        rMem : OUT INTEGER;
-        rMemOdd : OUT STD_LOGIC;
-        address0 : OUT INTEGER;
+        rMem : OUT INTEGER; --qué bloque se lee
+        rMemOdd : OUT STD_LOGIC; --par o impar
+        address0 : OUT INTEGER; --direcciones para cada banco
         address1 : OUT INTEGER;
         address2 : OUT INTEGER;
         padding : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
-        kernelCol : OUT INTEGER;
+        kernelCol : OUT INTEGER; --para ordenar el kernel
         kernelRow : OUT INTEGER;
         validOut : OUT STD_LOGIC;
 
-        weightaddress : OUT INTEGER;
+        weightaddress : OUT INTEGER; --direcciones memoria de pesos
 
         weRAM : OUT STD_LOGIC;
-        wMemOdd : OUT STD_LOGIC;
-        wBank : OUT INTEGER;
-        waddress : OUT INTEGER);
+        wMemOdd : OUT STD_LOGIC; --par o impar
+        wBank : OUT INTEGER; --a que banco
+        waddress : OUT INTEGER); --a que direccion
 END MemControl;
 
 ARCHITECTURE arch OF MemControl IS
@@ -39,10 +41,11 @@ ARCHITECTURE arch OF MemControl IS
     --constantes
     CONSTANT Hc : INTEGER := columns(layer + 1);
     CONSTANT Hr : INTEGER := rows(layer + 1);
-    CONSTANT Ch : INTEGER := filters(layer);
+
+    CONSTANT Ch : INTEGER := filters(layer); --el numero de canales dependerá del numero de filtros en la etapa
     CONSTANT K : INTEGER := kernels(layer);
 
-    CONSTANT Fnext : INTEGER := filters(layer + 1);
+    CONSTANT Fnext : INTEGER := filters(layer + 1);--esto sirve a saber como leer la memoria para la siguiente etapa
     CONSTANT Knext : INTEGER := kernels(layer + 1);
 
     --señal de delay
@@ -74,7 +77,7 @@ ARCHITECTURE arch OF MemControl IS
     SIGNAL addrOffrow1 : INTEGER;
     SIGNAL addcount_row : INTEGER;
 
-    signal sweightaddress: INTEGER;
+    SIGNAL sweightaddress : INTEGER;
 
     --señales escritura
     SIGNAL s_wbank : INTEGER;
@@ -103,7 +106,7 @@ BEGIN
     kernelCol <= s_kernelCol;
     kernelrow <= s_kernelRow;
     rmem <= s_rmem;
-    rmemodd <= NOT(s_wmemodd);
+    rmemodd <= NOT(s_wmemodd); --la memoria de la que se lee es siempre la contraria a la que se escribe
 
     address0 <= raddress + addrOffrow0;
     address1 <= raddress + addrOffrow1;
@@ -117,14 +120,14 @@ BEGIN
             Sweightaddress <= 0;
 
             count_delay <= 0;
-            delay <=(layer + 1) * delaymem(layer);
+            delay <= (layer + 1) * delaymem(layer); --delay inicial en función de la capa
 
             --lectura
             validOut <= '0';
 
             oe <= '0';
 
-            rcount_col <= - 2; --desfase
+            rcount_col <= - 2; --desfase inicial para cargar el kernel
             rcount_ch <= 0;
             rcount_chMEM <= 0;
 
@@ -134,7 +137,7 @@ BEGIN
 
             s_rmem <= 0;
             s_kernelCol <= 2; --desfase
-            s_kernelrow <= 1; --el cero esta en la f1 del kernel
+            s_kernelrow <= 1; --el dato cero esta en la f1 del kernel
 
             raddress <= 0;
             rbase <= 0;
@@ -157,8 +160,8 @@ BEGIN
             IF START = '1' THEN
                 count_delay <= count_delay + 1;
                 IF count_delay = delay - 1 THEN
-                    delay <= delaymem(layer);
-                    oe <= '1';
+                    delay <= delaymem(layer); --a partir de aqui delay estandar para todas las capas
+                    oe <= '1'; --y se permite la lectura
                     s_wmemodd <= NOT(s_wmemodd);
                     count_delay <= 0;
                 END IF;
@@ -171,8 +174,8 @@ BEGIN
                 wcount_col <= wcount_col + 1;
                 wcount_data <= wcount_data + 1;
 
-                IF s_wbank = wbankOffset + 2 THEN --final del bloque
-                    s_wbank <= wbankOffset;
+                IF s_wbank = wbankOffset + 2 THEN --final del bloque 
+                    s_wbank <= wbankOffset; --se vuelve al "primero"
                     s_waddress <= s_waddress + 1;
                 END IF;
 
@@ -185,25 +188,25 @@ BEGIN
                     s_wbank <= 0;
                 ELSIF wcount_col = Hc - 1 THEN -- final del canal
                     wcount_col <= 0;
-                    s_wbank <= wbankOffset;
+                    s_wbank <= wbankOffset; --se vuelve al "primero"
                     s_waddress <= s_waddress + 1;
                     wcount_ch <= wcount_ch + 1;
                     IF wcount_ch = (Ch/K) - 1 THEN --final de la fila
-                        wbankOffset <= wbankOffset + 3;
-                        s_wbank <= wbankOffset + 3;
-                        s_waddress <= waddressoffset;
+                        wbankOffset <= wbankOffset + 3; --se actualiza el "primer bloque"
+                        s_wbank <= wbankOffset + 3;     -- y se vuelve a ese
+                        s_waddress <= waddressoffset; --se vuelve a la "primera"
                         wcount_ch <= 0;
                         IF wbankOffset = 6 THEN --cada 3 filas
                             s_wbank <= 0; --vuelta al banco 0
                             wbankOffset <= 0;
-                            waddressoffset <= s_waddress + 1;
+                            waddressoffset <= s_waddress + 1; --se añade un offset a la dirección
                             s_waddress <= s_waddress + 1;
                         END IF;
                     END IF;
                 END IF;
             END IF;
-            --lectura
 
+            --lectura
             IF oe = '1' THEN
                 --validOut
                 count_validout <= count_validout + 1;
@@ -226,18 +229,21 @@ BEGIN
                     raddress <= raddress + 1;
                     rdir_deadline <= - 1;
                     rcount_chMEM <= rcount_chMEM + 1;
-                    IF rcount_chMEM = Ch/K - 1 THEN --cambia de memoria AQUI ESTA EL PROBLEMA NO ES SOLO F/K -1 SINO TODOS LOS MÚLTIPLOS
+
+                    IF rcount_chMEM = Ch/K - 1 THEN --cambia de memoria
                         rcount_chMEM <= 0;
                         raddress <= rbase;
                         rdir_deadline <= - 1;
                         s_rmem <= s_rmem + 1;
+
                         IF s_rmem = K - 1 THEN ---cambia de fila y de memoria
                             raddress <= rbase;
                             rdir_deadline <= - 1;
                             s_rmem <= 0;
-                            IF rcount_fil = Fnext/Knext - 1 THEN
 
+                            IF rcount_fil = Fnext/Knext - 1 THEN
                                 addcount_row <= addcount_row + 1;
+
                                 IF addcount_row = 2 THEN
                                     rbase <= raddress + 1;
                                     addcount_row <= 0;
@@ -264,12 +270,12 @@ BEGIN
                     IF rcount_ch = Ch - 1 THEN --cambia de filtro
                         rcount_ch <= 0;
                         rcount_fil <= rcount_fil + 1;
-                        
+
                         IF rcount_fil = Fnext/Knext - 1 THEN ---cambia de fila 
                             rcount_row <= rcount_row + 1;
                             Sweightaddress <= 0;
-
                             rcount_fil <= 0;
+
                             IF rcount_row = Hr - 1 THEN -- ultimo dato
                                 rcount_row <= 0;
                                 rcount_col <= - 2;
@@ -278,7 +284,7 @@ BEGIN
                                 s_rmem <= 0;
                                 count_validout <= 0;
                                 validOut <= '0';
-                                oe <= '0';
+                                oe <= '0'; --no se permite leer hasta pasado el siguiente delay
                             END IF;
                         END IF;
                     END IF;
@@ -362,6 +368,6 @@ BEGIN
         ELSE
             padding <= "000";
         END IF;
-
     END PROCESS padding_proc;
+    
 END arch;

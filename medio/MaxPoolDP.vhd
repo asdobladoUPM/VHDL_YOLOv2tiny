@@ -5,6 +5,8 @@ USE ieee.numeric_std.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--Bloque de datapath para el MaxPooling
+
 ENTITY MaxPoolDP IS
     GENERIC (
         Layer : INTEGER := 1);
@@ -24,7 +26,7 @@ ARCHITECTURE rtl OF MaxPoolDP IS
 
     CONSTANT rst_val : STD_LOGIC := '0';
     CONSTANT WL : INTEGER := bits(layer); -- Word Length
-    CONSTANT BL : INTEGER := ((filters(layer)/kernels(layer)) * columns(layer)/2) - 1; --mas?
+    CONSTANT BL : INTEGER := ((filters(layer)/kernels(layer)) * columns(layer)/2) - 1;
 
     COMPONENT DelayMem
         GENERIC (
@@ -57,22 +59,11 @@ BEGIN
     zeroes <= (OTHERS => '0');
     sd1 <= signed(d1);
 
-    LinBuff : DelayMem
-    GENERIC MAP(
-        BL => BL, WL => WL)
-    PORT MAP(
-        clk => clk,
-        reset => reset,
-        validIn => enLBuffer,
-        Din => STD_LOGIC_VECTOR(max1),
-        Dout => LBo
-    );
-    
     sec : PROCESS (clk, reset)
     BEGIN
         IF reset = '0' THEN
 
-            d1 <= '1' & zeroes;
+            d1 <= '1' & zeroes; --menor posible
 
         ELSIF rising_edge(clk) THEN
 
@@ -93,6 +84,17 @@ BEGIN
         END IF;
     END PROCESS MAX1p;
 
+    LinBuff : DelayMem
+    GENERIC MAP(
+        BL => BL, WL => WL)
+    PORT MAP(
+        clk => clk,
+        reset => reset,
+        validIn => enLBuffer,
+        Din => STD_LOGIC_VECTOR(max1),
+        Dout => LBo
+    );
+    
     MAX2p : PROCESS (sLBo, max1)
     BEGIN
         IF (sLBo > max1) THEN

@@ -9,7 +9,7 @@ USE work.YOLO_pkg.ALL;
 --no tiene memoria de pesos
 --no tiene kernel
 --saca un dato a la vez
---saca un dato solo una vez
+--saca un dato sólo una vez
 
 ENTITY MemDPLL IS
     GENERIC (
@@ -103,8 +103,6 @@ BEGIN
         END GENERATE mem_gen;
     END GENERATE block_gen;
 
-        --CONVERSION WEBANK A VECTOR
-
     webank_proc : PROCESS (wBank, we)
     BEGIN
         CASE wbank IS
@@ -131,7 +129,7 @@ BEGIN
             WHEN '0' =>
                 DataOutRAM <= DataOutRAMeven;
             WHEN OTHERS =>
-                DataOutRAM <= (OTHERS => (OTHERS => '0'));
+                DataOutRAM <= (OTHERS => (OTHERS => (OTHERS => '0')));
         END CASE;
     END PROCESS dataout_proc;
 
