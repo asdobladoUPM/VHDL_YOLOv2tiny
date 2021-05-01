@@ -9,14 +9,14 @@ ENTITY MaxPoolDP IS
     GENERIC (
         Layer : INTEGER := 1);
     PORT (
-        clk, reset : IN STD_LOGIC;
+    clk, reset : IN STD_LOGIC;
 
-        val_d1 : IN STD_LOGIC;
-        enLBuffer : IN STD_LOGIC;
+    val_d1 : IN STD_LOGIC;
+    enLBuffer : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0);
+    datain : IN STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0);
 
-        dataout : OUT STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0)
+    dataout : OUT STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0)
     );
 END ENTITY MaxPoolDP;
 
@@ -24,9 +24,9 @@ ARCHITECTURE rtl OF MaxPoolDP IS
 
     CONSTANT rst_val : STD_LOGIC := '0';
     CONSTANT WL : INTEGER := bits(layer); -- Word Length
-    CONSTANT BL : INTEGER := ((filters(layer)/kernels(layer)) * columns(layer)/2) - 1; --mas?
+    CONSTANT BL : INTEGER := ((filters(layer)/kernels(layer))*columns(layer)/2)-1;  --mas?
 
-    COMPONENT DelayMem
+    COMPONENT LinealBuffer
         GENERIC (
             BL : INTEGER := 1; -- Buffer Length
             WL : INTEGER := 1 -- Word Length
@@ -34,9 +34,9 @@ ARCHITECTURE rtl OF MaxPoolDP IS
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-            validIn : IN STD_LOGIC;
-            Din : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
-            Dout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
+            enable_LBuffer : IN STD_LOGIC;
+            datain : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
+            dataout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
         );
     END COMPONENT;
 
@@ -57,17 +57,15 @@ BEGIN
     zeroes <= (OTHERS => '0');
     sd1 <= signed(d1);
 
-    LinBuff : DelayMem
-    GENERIC MAP(
-        BL => BL, WL => WL)
+    LB : LinealBuffer
+    GENERIC MAP(BL => BL, WL => WL)
     PORT MAP(
         clk => clk,
         reset => reset,
-        validIn => enLBuffer,
-        Din => STD_LOGIC_VECTOR(max1),
-        Dout => LBo
-    );
-    
+        enable_LBuffer => enLBuffer,
+        datain => STD_LOGIC_VECTOR(max1),
+        dataout => LBo);
+
     sec : PROCESS (clk, reset)
     BEGIN
         IF reset = '0' THEN

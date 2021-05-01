@@ -29,9 +29,6 @@ PACKAGE YOLO_pkg IS
   FUNCTION bufferwidth(layer : INTEGER := 1) RETURN INTEGER;
 
   FUNCTION delaymem(layer : INTEGER := 1) RETURN INTEGER;
-  
-  function log (L: INTEGER) return INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
-
 END YOLO_pkg;
 
 PACKAGE BODY YOLO_pkg IS
@@ -292,16 +289,5 @@ END weightsbitsAddress;
   BEGIN
     RETURN 11927567;
   END delaymem;
-  
-  function log (L: INTEGER) return INTEGER is
-begin
-	for i in 0 to 100 loop
-		if L < 2**i then
-			return i;
-		end if;
-	end loop;
-	
-	return -1;
-end;
 END YOLO_pkg;
 

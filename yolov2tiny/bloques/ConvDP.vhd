@@ -30,6 +30,8 @@ ARCHITECTURE rtl OF ConvDP IS
     CONSTANT WL : INTEGER := bufferwidth(layer); -- Word Length
     CONSTANT columns : INTEGER := columns(layer);--mas?
 
+    
+
     COMPONENT signedInverse
         GENERIC (Layer : INTEGER);
         PORT (
@@ -47,17 +49,17 @@ ARCHITECTURE rtl OF ConvDP IS
         );
     END COMPONENT;
 
-    COMPONENT DelayMem
+    COMPONENT LinealBuffer
         GENERIC (
-            BL : INTEGER := 1; -- Buffer Length
-            WL : INTEGER := 1 -- Word Length
+            BL : INTEGER := 1;      -- Buffer Length
+            WL : INTEGER := 1       -- Word Length
         );
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-            validIn : IN STD_LOGIC;
-            Din : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
-            Dout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
+            enable_LBuffer : IN STD_LOGIC;
+            datain : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
+            dataout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
         );
     END COMPONENT;
 
@@ -152,15 +154,15 @@ BEGIN
 
     in_buffer <= STD_LOGIC_VECTOR(sout_teradder2 + sout_mux_buffer);
 
-    LinBuff : DelayMem
+    LB : LinealBuffer
     GENERIC MAP(
-        BL => columns - 1, WL => WL)
+        BL => columns-1, WL =>WL )
     PORT MAP(
         clk => clk,
         reset => reset,
-        validIn => enableLbuffer,
-        Din => in_buffer,
-        Dout => out_buffer
+        enable_LBuffer => enableLbuffer, --NO
+        datain => in_buffer,
+        dataout => out_buffer
     );
 
     sout_MUL <= signed(out_buffer) * Ynorm;

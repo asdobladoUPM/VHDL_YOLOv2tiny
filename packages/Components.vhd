@@ -7,7 +7,7 @@ use IEEE.MATH_REAL.ALL;
 
 package Components is
 
-function bits (L: INTEGER) return INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
+function log (L: INTEGER) return INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
 function nextPow2 (L: INTEGER) return INTEGER; -- Given an integer number, it returns the smallest power of 2 that is larger than that integer. 
 function bitSwap(L, B, B0, B1: INTEGER) return INTEGER; -- Given an integer L, it swaps the bits B0 and B1. B is the number of bits of L.
 
@@ -31,7 +31,7 @@ end Components;
 
 package body Components is
 
-function bits (L: INTEGER) return INTEGER is
+function log (L: INTEGER) return INTEGER is
 begin
 	for i in 0 to 100 loop
 		if L < 2**i then
