@@ -5,6 +5,8 @@ USE IEEE.numeric_std.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--aqui compruebo la sinergia entre el bloque de control y el datapath para la capa de MaxPooling
+
 ENTITY MPLayer IS
     GENERIC (layer : INTEGER := 1);
     PORT (
@@ -77,7 +79,5 @@ PORT MAP(
     enLBuffer => enLBuff,
     datain => datain,
     dataout => dataout);
-
-
 
 END ARCHITECTURE rtl;

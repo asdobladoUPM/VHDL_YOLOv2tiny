@@ -13,6 +13,8 @@ END HA;
 
 ARCHITECTURE rtl OF HA IS
 BEGIN
+
     S <= in_b1 XOR in_b2;
     Cout <= in_b1 AND in_b2;
+    
 END rtl;

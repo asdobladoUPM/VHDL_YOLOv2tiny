@@ -39,12 +39,12 @@ ARCHITECTURE rtl OF ConvControl IS
 
     --Contadores
 
-    SIGNAL count_col : INTEGER;
-    SIGNAL count_row : INTEGER;
-    SIGNAL count_filters : INTEGER;
-    SIGNAL count_ch : INTEGER;
+    SIGNAL count_col : unsigned(bits(Hc - 1) - 1 DOWNTO 0);
+    SIGNAL count_row : unsigned(bits(Hr - 1) - 1 DOWNTO 0);
+    SIGNAL count_filters : unsigned(bits(F - 1) - 1 DOWNTO 0);
+    SIGNAL count_ch : unsigned(bits(Ch - 1) - 1 DOWNTO 0);
 
-    SIGNAL count_pushing : INTEGER;
+    SIGNAL count_pushing : unsigned(bits(Hc - 1) - 1 DOWNTO 0);
 
     --Señales de control
 
@@ -57,32 +57,32 @@ BEGIN
         IF reset = rst_val THEN
 
             --reset de contadores
-            count_col <= 0;
-            count_row <= 0;
-            count_filters <= 0;
-            count_ch <= 0;
+            count_col <= (OTHERS => '0');
+            count_row <= (OTHERS => '0');
+            count_filters <= (OTHERS => '0');
+            count_ch <= (OTHERS => '0');
 
             --reset de señales
             pushing <= '0';
-            count_pushing <= 0;
+            count_pushing <= (OTHERS => '0');
 
         ELSIF rising_edge(clk) THEN
 
             --si llega un dato aumentamos contadores
             IF validIn = '1' THEN
                 count_col <= count_col + 1;
-                IF count_col = Hc - 1 THEN --cambio de canal
-                    count_col <= 0;
+                IF count_col = to_unsigned(Hc - 1,bits(Hc - 1)) THEN --cambio de canal
+                    count_col <= (others => '0');
                     count_ch <= count_ch + 1;
-                    IF count_ch = Ch - 1 THEN --cambio de filtro
-                        count_ch <= 0;
+                    IF count_ch = to_unsigned(Ch - 1,bits(Ch-1)) THEN --cambio de filtro
+                        count_ch <= (OTHERS => '0');
                         count_filters <= count_filters + 1;
-                        IF count_filters = F/K - 1 THEN --cambio de fila
-                            count_filters <= 0;
+                        IF count_filters = to_unsigned(F/K - 1,bits(F-1)) THEN --cambio de fila
+                            count_filters <= (OTHERS => '0');
                             count_row <= count_row + 1;
-                            IF count_row = Hr - 1 THEN --ultimo dato
+                            IF count_row = to_unsigned(Hr - 1,bits(Hr-1)) THEN --ultimo dato
                                 pushing <= '1'; --señal para vaciar el LB
-                                count_row <= 0;
+                                count_row <= (OTHERS => '0');
                             END IF;
                         END IF;
                     END IF;
@@ -91,8 +91,8 @@ BEGIN
 
             IF pushing = '1' THEN --estado final para sacar del LB los datos de la última fila del último filtro
                 count_pushing <= count_pushing + 1;
-                IF count_pushing = Hc - 1 THEN --si se han sacado Hc datos
-                    count_pushing <= 0;
+                IF count_pushing = to_unsigned(Hc - 1,bits(Hc-1)) THEN --si se han sacado Hc datos
+                    count_pushing <= (OTHERS => '0');
                     pushing <= '0'; --se termina
                 END IF;
             END IF;
@@ -103,7 +103,7 @@ BEGIN
     comb_proc : PROCESS (validIn, count_ch, count_filters, count_row, pushing)
     BEGIN
 
-        IF validIn = '1' THEN 
+        IF validIn = '1' THEN
             enableLBuffer <= '1';
             IF count_ch = 0 THEN --los primeros datos
                 s_startLBuffer <= '1'; --no deben usar los datos del LB
@@ -118,7 +118,7 @@ BEGIN
         IF pushing = '1' THEN --si estamos en pushing
             validOut <= '1'; --los datos son válidos siempre
         ELSIF validIN = '1' AND count_ch = 0 THEN --si la entrada es valida y es el primer canal
-            IF count_filters = 0 AND count_row = 0 THEN
+            IF count_filters = (OTHERS => '0') AND count_row = (OTHERS => '0') THEN
                 validOut <= '0';
             ELSE
                 validOut <= '1'; --los datos son válidos si no es la primera fila del primer filtro 

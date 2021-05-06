@@ -7,7 +7,7 @@ USE work.YOLO_pkg.ALL;
 
 --Bloque de datapath para la convolucion de la última capa
 
-ENTITY ConvDP IS
+ENTITY ConvDP9 IS
     GENERIC (layer : INTEGER := 1);
     PORT (
         clk : IN STD_LOGIC;
@@ -23,9 +23,9 @@ ENTITY ConvDP IS
 
         dataout : OUT STD_LOGIC_VECTOR(15 DOWNTO 0) --salida de 16
     );
-END ENTITY ConvDP;
+END ENTITY ConvDP9;
 
-ARCHITECTURE rtl OF ConvDP IS
+ARCHITECTURE rtl OF ConvDP9 IS
 
     CONSTANT bits : INTEGER := 14;
     CONSTANT grid : INTEGER := grid(layer);
@@ -101,27 +101,27 @@ BEGIN
     ter_add1 : ternaryAdder
     GENERIC MAP(N => bits)
     PORT MAP(
-        A => out_signedInverse(bits - 1 DOWNTO 0),
-        B => out_signedInverse(2 * bits - 1 DOWNTO bits),
-        C => out_signedInverse(3 * bits - 1 DOWNTO 2 * bits),
+        A => out_weight_mul(bits - 1 DOWNTO 0),
+        B => out_weight_mul(2 * bits - 1 DOWNTO bits),
+        C => out_weight_mul(3 * bits - 1 DOWNTO 2 * bits),
         dataout => out_teradder1(15 DOWNTO 0) --param??
     );
 
     ter_add2 : ternaryAdder
     GENERIC MAP(N => bits)
     PORT MAP(
-        A => out_signedInverse(4 * bits - 1 DOWNTO 3 * bits),
-        B => out_signedInverse(5 * bits - 1 DOWNTO 4 * bits),
-        C => out_signedInverse(6 * bits - 1 DOWNTO 5 * bits),
+        A => out_weight_mul(4 * bits - 1 DOWNTO 3 * bits),
+        B => out_weight_mul(5 * bits - 1 DOWNTO 4 * bits),
+        C => out_weight_mul(6 * bits - 1 DOWNTO 5 * bits),
         dataout => out_teradder1(31 DOWNTO 16) --param??
     );
 
     ter_add3 : ternaryAdder
     GENERIC MAP(N => bits)
     PORT MAP(
-        A => out_signedInverse(7 * bits - 1 DOWNTO 6 * bits),
-        B => out_signedInverse(8 * bits - 1 DOWNTO 7 * bits),
-        C => out_signedInverse(9 * bits - 1 DOWNTO 8 * bits),
+        A => out_weight_mul(7 * bits - 1 DOWNTO 6 * bits),
+        B => out_weight_mul(8 * bits - 1 DOWNTO 7 * bits),
+        C => out_weight_mul(9 * bits - 1 DOWNTO 8 * bits),
         dataout => out_teradder1(47 DOWNTO 32) --param??
     );
 

@@ -45,7 +45,9 @@ ARCHITECTURE rtl OF capa IS
             weRAM : OUT STD_LOGIC;
             wMemOdd : OUT STD_LOGIC;
             wBank : OUT INTEGER;
-            waddress : OUT INTEGER);
+            waddress : OUT INTEGER;
+            
+            weightaddress : OUT INTEGER);
     END COMPONENT;
 
     COMPONENT ConvControl
@@ -66,7 +68,7 @@ ARCHITECTURE rtl OF capa IS
 
     END COMPONENT;
 
-    COMPONENT MPcontrol
+    COMPONENT MaxPoolControl
         GENERIC (
             Layer : INTEGER
         );
@@ -107,7 +109,8 @@ BEGIN
         weram => OPEN,
         wmemodd => OPEN,
         wBank => OPEN,
-        waddress => OPEN
+        waddress => OPEN,
+        weightaddress => OPEN
     );
 
     ConvLX : ConvControl
@@ -118,7 +121,7 @@ BEGIN
         startLBuffer => OPEN, enableLBuffer => OPEN,
         validOut => outCV);
 
-    MPL : MPControl
+    MPL : MaxPoolControl
     GENERIC MAP(Layer => layer)
     PORT MAP(
         clk => clk,

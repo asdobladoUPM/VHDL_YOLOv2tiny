@@ -1,140 +1,127 @@
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
-use IEEE.MATH_REAL.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE IEEE.MATH_REAL.ALL;
 
+PACKAGE Components IS
 
-package Components is
+	FUNCTION bits (L : INTEGER) RETURN INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
+	FUNCTION nextPow2 (L : INTEGER) RETURN INTEGER; -- Given an integer number, it returns the smallest power of 2 that is larger than that integer. 
+	FUNCTION bitSwap(L, B, B0, B1 : INTEGER) RETURN INTEGER; -- Given an integer L, it swaps the bits B0 and B1. B is the number of bits of L.
 
-function log (L: INTEGER) return INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
-function nextPow2 (L: INTEGER) return INTEGER; -- Given an integer number, it returns the smallest power of 2 that is larger than that integer. 
-function bitSwap(L, B, B0, B1: INTEGER) return INTEGER; -- Given an integer L, it swaps the bits B0 and B1. B is the number of bits of L.
+	FUNCTION min(L, R : INTEGER) RETURN INTEGER;
+	FUNCTION max(L, R : INTEGER) RETURN INTEGER;
 
-function min(L, R: INTEGER) return INTEGER; 
-function max(L, R: INTEGER) return INTEGER; 
+	FUNCTION min(L, R : REAL) RETURN REAL;
+	FUNCTION max(L, R : REAL) RETURN REAL;
 
-function min(L, R: REAL) return REAL; 
-function max(L, R: REAL) return REAL; 
+	FUNCTION isEqual(A, B : INTEGER) RETURN INTEGER;
+	FUNCTION isOdd(A : INTEGER) RETURN INTEGER;
+	FUNCTION isEven(A : INTEGER) RETURN INTEGER;
 
-function isEqual(A, B: INTEGER) return INTEGER;	
-function isOdd(A: INTEGER) return INTEGER;      
-function isEven(A: INTEGER) return INTEGER;       
+	TYPE databus IS ARRAY (INTEGER RANGE <>, INTEGER RANGE <>) OF STD_LOGIC;
 
-type databus is array (integer range <>, integer range <>) of std_logic;
-
-end Components;
+END Components;
 
 --------------
 ---- BODY ----
 --------------
 
-package body Components is
+PACKAGE BODY Components IS
 
-function log (L: INTEGER) return INTEGER is
-begin
-	for i in 0 to 100 loop
-		if L < 2**i then
-			return i;
-		end if;
-	end loop;
-	
-	return -1;
-end;
+	FUNCTION bits (L : INTEGER) RETURN INTEGER IS
+	BEGIN
+		FOR i IN 0 TO 100 LOOP
+			IF L < 2 ** i THEN
+				RETURN i;
+			END IF;
+		END LOOP;
 
-function nextPow2 (L: INTEGER) return INTEGER is
-begin
-	if L = 0 then
-		return 0; 
-	end if;
-	
-	for i in 0 to 100 loop
-		if L < 2**i +1 then
-			return 2**i;
-		end if;
-	end loop;
-	
-	return -1;
-end;
+		RETURN -1;
+	END;
 
+	FUNCTION nextPow2 (L : INTEGER) RETURN INTEGER IS
+	BEGIN
+		IF L = 0 THEN
+			RETURN 0;
+		END IF;
 
-function bitSwap(L, B, B0, B1: INTEGER) return INTEGER is
-	variable Lbin : unsigned(B-1 downto 0);
-	variable C: std_logic;
-begin
-	Lbin := to_unsigned(L,B);
-	C := Lbin(B0);
-	Lbin(B0) := Lbin(B1);
-	Lbin(B1) := C;
-	return to_integer(Lbin);
-end;
+		FOR i IN 0 TO 100 LOOP
+			IF L < 2 ** i + 1 THEN
+				RETURN 2 ** i;
+			END IF;
+		END LOOP;
 
+		RETURN -1;
+	END;
+	FUNCTION bitSwap(L, B, B0, B1 : INTEGER) RETURN INTEGER IS
+		VARIABLE Lbin : unsigned(B - 1 DOWNTO 0);
+		VARIABLE C : STD_LOGIC;
+	BEGIN
+		Lbin := to_unsigned(L, B);
+		C := Lbin(B0);
+		Lbin(B0) := Lbin(B1);
+		Lbin(B1) := C;
+		RETURN to_integer(Lbin);
+	END;
+	FUNCTION min(L, R : INTEGER) RETURN INTEGER IS
+	BEGIN
+		IF L < R THEN
+			RETURN L;
+		ELSE
+			RETURN R;
+		END IF;
+	END;
 
-function min(L, R: INTEGER) return INTEGER is
-begin
-	if L < R then
-	    return L;
-	else
-	    return R;
-	end if;
-end;
+	FUNCTION max(L, R : INTEGER) RETURN INTEGER IS
+	BEGIN
+		IF L < R THEN
+			RETURN R;
+		ELSE
+			RETURN L;
+		END IF;
+	END;
+	FUNCTION min(L, R : REAL) RETURN REAL IS
+	BEGIN
+		IF L < R THEN
+			RETURN L;
+		ELSE
+			RETURN R;
+		END IF;
+	END;
 
-function max(L, R: INTEGER) return INTEGER is
-begin
-	if L < R then
-	    return R;
-	else
-	    return L;
-	end if;
-end;
+	FUNCTION max(L, R : REAL) RETURN REAL IS
+	BEGIN
+		IF L < R THEN
+			RETURN R;
+		ELSE
+			RETURN L;
+		END IF;
+	END;
+	FUNCTION isEqual(A, B : INTEGER) RETURN INTEGER IS
+	BEGIN
+		IF A = B THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	END;
+	FUNCTION isOdd(A : INTEGER) RETURN INTEGER IS
+		VARIABLE I : real;
+	BEGIN
 
+		I := real(A)/real(2);
 
-function min(L, R: REAL) return REAL is
-begin
-	if L < R then
-	    return L;
-	else
-	    return R;
-	end if;
-end;
+		IF floor(I) = I THEN -- Vale asi porque A es un numero entero.
+			RETURN 0; -- es par, no impar
+		ELSE
+			RETURN 1;
+		END IF;
+	END;
 
-function max(L, R: REAL) return REAL is
-begin
-	if L < R then
-	    return R;
-	else
-	    return L;
-	end if;
-end;
-
-
-function isEqual(A, B: INTEGER) return INTEGER is
-begin 
-	if A = B	then
-		return 1;
-	else
-		return 0;
-	end if;
-end;
-
-
-function isOdd(A: INTEGER) return INTEGER is
-	variable I: real;
-begin 
-   
-   I:= real(A)/real(2);
-   
-   if floor(I) = I then	-- Vale asi porque A es un numero entero.
-      return 0; -- es par, no impar
-   else 
-      return 1;
-   end if;
-end;
-
-function isEven(A: INTEGER) return INTEGER is
-begin 
-	return 1 - isOdd(A);
-end;
-
-
-end Components;
+	FUNCTION isEven(A : INTEGER) RETURN INTEGER IS
+	BEGIN
+		RETURN 1 - isOdd(A);
+	END;
+END Components;

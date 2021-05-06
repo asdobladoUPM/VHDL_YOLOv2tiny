@@ -6,6 +6,13 @@ USE IEEE.MATH_REAL.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--Bloque de control para la última memoria
+    --cambia la lectura
+        --cada dato se lee sólo una vez
+        --y no F/K veces como en las anteriores
+    --no tiene memoria de pesos
+    --no tiene kernel
+
 ENTITY MemControlLL IS
     GENERIC (
         layer : INTEGER := 4);
@@ -31,13 +38,10 @@ END MemControlLL;
 ARCHITECTURE arch OF MemControlLL IS
 
     --constantes
-    CONSTANT Hc : INTEGER := columns(layer + 1);
-    CONSTANT Hr : INTEGER := rows(layer + 1);
+    CONSTANT Hc : INTEGER := 13;
+    CONSTANT Hr : INTEGER := 13;
     CONSTANT Ch : INTEGER := filters(layer);
-    CONSTANT K : INTEGER := kernels(layer);
-
-    CONSTANT Fnext : INTEGER := filters(layer + 1);
-    CONSTANT Knext : INTEGER := kernels(layer + 1);
+    CONSTANT K : INTEGER := 2;
 
     --señal de delay
     SIGNAL count_delay : INTEGER;
@@ -97,7 +101,7 @@ BEGIN
         IF reset = '0' THEN
 
             count_delay <= 0;
-            delay <= 100;--(layer + 1) * delaymem(layer);
+            delay <= (layer + 1) * delaymem(layer);
 
             --lectura
             validOut <= '0';
@@ -142,7 +146,7 @@ BEGIN
                 END IF;
             END IF;
 
-            --escritura
+            --escritura (identica a la otra)
             IF we = '1' THEN
 
                 s_wbank <= s_wbank + 1;
@@ -180,8 +184,8 @@ BEGIN
                     END IF;
                 END IF;
             END IF;
-            --lectura
 
+            --lectura
             IF oe = '1' THEN
 
                 validOut <= '1';
@@ -201,7 +205,7 @@ BEGIN
                     rdir_deadline <= 0;
                     rcount_chMEM <= rcount_chMEM + 1;
                     s_rBank <= s_rBankOffset;
-                    IF rcount_chMEM = Ch/K - 1 THEN --cambia de memoria AQUI ESTA EL PROBLEMA NO ES SOLO F/K -1 SINO TODOS LOS MÚLTIPLOS
+                    IF rcount_chMEM = Ch/K - 1 THEN --cambia de memoria
                         rcount_chMEM <= 0;
                         raddress <= rbase;
                         rdir_deadline <= 0;
@@ -252,6 +256,7 @@ BEGIN
                         END IF;
                     END IF;
                 END IF;
+
             ELSE
                 validOut <= '0';
             END IF;

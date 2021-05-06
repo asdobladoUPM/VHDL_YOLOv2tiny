@@ -1,8 +1,14 @@
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE IEEE.MATH_REAL.ALL;
 
 PACKAGE YOLO_pkg IS
+
+  FUNCTION bits (L : INTEGER) RETURN INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
+
+	FUNCTION nextPow2 (L : INTEGER) RETURN INTEGER; -- Given an integer number, it returns the smallest power of 2 that is larger than that integer. 
 
   FUNCTION rows(layer : IN INTEGER := 1) RETURN INTEGER;
 
@@ -18,7 +24,7 @@ PACKAGE YOLO_pkg IS
 
   FUNCTION step(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION bits(layer : INTEGER := 1) RETURN INTEGER;
+  FUNCTION layerbits(layer : INTEGER := 1) RETURN INTEGER;
 
   FUNCTION weightbits(layer : INTEGER := 1) RETURN INTEGER;
 
@@ -30,11 +36,35 @@ PACKAGE YOLO_pkg IS
 
   FUNCTION delaymem(layer : INTEGER := 1) RETURN INTEGER;
 
-  FUNCTION log (L : INTEGER) RETURN INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
-
 END YOLO_pkg;
 
 PACKAGE BODY YOLO_pkg IS
+
+  FUNCTION bits (L : INTEGER) RETURN INTEGER IS
+  BEGIN
+    FOR i IN 0 TO 100 LOOP
+      IF L < 2 ** i THEN
+        RETURN i;
+      END IF;
+    END LOOP;
+
+    RETURN -1;
+  END;
+
+  FUNCTION nextPow2 (L : INTEGER) RETURN INTEGER IS
+	BEGIN
+		IF L = 0 THEN
+			RETURN 0;
+		END IF;
+
+		FOR i IN 0 TO 100 LOOP
+			IF L < 2 ** i + 1 THEN
+				RETURN 2 ** i;
+			END IF;
+		END LOOP;
+
+		RETURN -1;
+	END;
 
   FUNCTION rows(layer : IN INTEGER := 1) RETURN INTEGER IS
     VARIABLE rows : INTEGER;
@@ -181,17 +211,17 @@ PACKAGE BODY YOLO_pkg IS
     RETURN step;
   END step;
 
-  FUNCTION bits(layer : INTEGER := 1) RETURN INTEGER IS
-    VARIABLE bits : INTEGER;
+  FUNCTION layerbits(layer : INTEGER := 1) RETURN INTEGER IS
+    VARIABLE layerbits : INTEGER;
   BEGIN
     CASE layer IS
       WHEN 9 =>
-        bits := 16;
+        layerbits := 16;
       WHEN OTHERS =>
-        bits := 6;
+        layerbits := 6;
     END CASE;
-    RETURN bits;
-  END bits;
+    RETURN layerbits;
+  END layerbits;
 
   FUNCTION weightbits(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE weightbits : INTEGER;
@@ -205,7 +235,7 @@ PACKAGE BODY YOLO_pkg IS
     RETURN weightbits;
   END weightbits;
 
-  FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER IS --DATOS INCOMPLETOS??
+  FUNCTION bitsAddress(layer : INTEGER := 1) RETURN INTEGER IS
     VARIABLE bitsAddress : INTEGER;
   BEGIN
     CASE layer IS
@@ -296,14 +326,4 @@ PACKAGE BODY YOLO_pkg IS
     RETURN 11927567;
   END delaymem;
 
-  FUNCTION log (L : INTEGER) RETURN INTEGER IS
-  BEGIN
-    FOR i IN 0 TO 100 LOOP
-      IF L < 2 ** i THEN
-        RETURN i;
-      END IF;
-    END LOOP;
-
-    RETURN -1;
-  END;
 END YOLO_pkg;

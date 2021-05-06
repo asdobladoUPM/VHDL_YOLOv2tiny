@@ -18,6 +18,7 @@ ENTITY MemDPLL IS
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
+        oe : IN STD_LOGIC;
         rMem : IN INTEGER;
         rbank : IN INTEGER;
 

@@ -15,17 +15,19 @@ ENTITY MemDP IS
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
+        Din : IN STD_LOGIC_VECTOR((kernels(layer) * 6) - 1 DOWNTO 0);
+
         rMem : IN INTEGER;
         rMemOdd : IN STD_LOGIC;
         address0 : IN INTEGER;
         address1 : IN INTEGER;
         address2 : IN INTEGER;
+
+        ValidIN : IN STD_LOGIC;
         padding : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
         kernelCol : IN INTEGER;
         kernelRow : IN INTEGER;
-        ValidIN : IN STD_LOGIC;
 
-        Din : IN STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
         we : IN STD_LOGIC;
         wMemOdd : IN STD_LOGIC;
         wBank : IN INTEGER;
@@ -95,7 +97,8 @@ ARCHITECTURE arch OF MemDP IS
     SIGNAL std_address0 : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
     SIGNAL std_address1 : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
     SIGNAL std_address2 : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
-    SIGNAL std_wadd : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
+
+    SIGNAL std_wadd : STD_LOGIC_VECTOR(weightbitaddress - 1 DOWNTO 0);
 BEGIN
 
     std_wadd <= STD_LOGIC_VECTOR(TO_UNSIGNED(Weightaddress, weightbitaddress));
@@ -163,7 +166,6 @@ BEGIN
     END PROCESS webank_proc;
 
     --SELECCION DE SALIDA 
-
     dataout_proc : PROCESS (rmemodd, vDataOutRAModd, vDataOutRAMeven)
     BEGIN
         CASE rmemodd IS
@@ -176,10 +178,16 @@ BEGIN
         END CASE;
     END PROCESS dataout_proc;
 
-    DataOutRAM <= vDataOutRAM(RMEM);
+    dataoutram_proc : PROCESS (rmem, vDataOutRAM)
+    BEGIN
+        IF rmem >= 0 AND rmem <= kernels(layer) - 1 THEN
+            DataOutRAM <= vDataOutRAM(RMEM);
+        ELSE
+            DataOutRam <= (OTHERS => '0');
+        END IF;
+    END PROCESS dataoutram_proc;
 
     --MEMORIA DE PESOS
-
     mem_weights : RAM
     GENERIC MAP(WL => weightbits, bitsAddress => weightbitaddress)
     PORT MAP(

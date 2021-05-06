@@ -5,14 +5,16 @@ USE IEEE.numeric_std.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--Bloque de datapath para la convolucion de la última capa
+
 ENTITY ConvDP IS
     GENERIC (layer : INTEGER := 1);
     PORT (
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR((grid(Layer) * 6) - 1 DOWNTO 0); --datos de 6
-        Weights : IN STD_LOGIC_VECTOR((8 * grid(Layer)) - 1 DOWNTO 0); --pesos de 8 bits
+        datain : IN STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0); --datos de 6 bits
+        Weights : IN STD_LOGIC_VECTOR((8 * 9) - 1 DOWNTO 0); --pesos de 8 bits
         Ynorm : IN signed(15 DOWNTO 0);
         Bnorm : IN signed(15 DOWNTO 0);
 
@@ -25,10 +27,10 @@ END ENTITY ConvDP;
 
 ARCHITECTURE rtl OF ConvDP IS
 
-    CONSTANT bits : INTEGER := 14;--mas?
-    CONSTANT grid : INTEGER := grid(layer);--mas?
+    CONSTANT bits : INTEGER := 14;
+    CONSTANT grid : INTEGER := grid(layer);
     CONSTANT WL : INTEGER := bufferwidth(layer); -- Word Length
-    CONSTANT columns : INTEGER := columns(layer);--mas?
+    CONSTANT columns : INTEGER := columns(layer);
 
     COMPONENT ternaryAdder
         GENERIC (N : INTEGER);
@@ -38,7 +40,7 @@ ARCHITECTURE rtl OF ConvDP IS
         );
     END COMPONENT;
 
-    COMPONENT LinealBuffer
+    COMPONENT DelayMem
         GENERIC (
             BL : INTEGER := 1; -- Buffer Length
             WL : INTEGER := 1 -- Word Length
@@ -46,9 +48,9 @@ ARCHITECTURE rtl OF ConvDP IS
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-            enable_LBuffer : IN STD_LOGIC;
-            datain : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
-            dataout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
+            validIn : IN STD_LOGIC;
+            Din : IN STD_LOGIC_VECTOR((WL - 1) DOWNTO 0);
+            Dout : OUT STD_LOGIC_VECTOR((WL - 1) DOWNTO 0)
         );
     END COMPONENT;
 
@@ -65,7 +67,7 @@ ARCHITECTURE rtl OF ConvDP IS
     SIGNAL sout_weight_mul : SIGNED(125 DOWNTO 0);
     SIGNAL out_weight_mul : STD_LOGIC_VECTOR(125 DOWNTO 0);
 
-    SIGNAL out_teradder1 : STD_LOGIC_VECTOR(3*16 - 1 DOWNTO 0);
+    SIGNAL out_teradder1 : STD_LOGIC_VECTOR(3 * 16 - 1 DOWNTO 0);
 
     SIGNAL out_teradder2 : STD_LOGIC_VECTOR(17 DOWNTO 0);
     SIGNAL sout_teradder2 : signed(17 DOWNTO 0);
@@ -85,6 +87,7 @@ ARCHITECTURE rtl OF ConvDP IS
     SIGNAL out_add : STD_LOGIC_VECTOR(15 DOWNTO 0);
 BEGIN
 
+    --WEIGHT MULTIPLICATION-------------------------------------------------------
     sDataIn <= signed(datain);
     sWeights <= signed(Weights);
 
@@ -94,6 +97,7 @@ BEGIN
 
     out_weight_mul <= STD_LOGIC_VECTOR(sout_weight_mul);
 
+    --FIRST ADDERS-------------------------------------------------------------------
     ter_add1 : ternaryAdder
     GENERIC MAP(N => bits)
     PORT MAP(
@@ -121,6 +125,7 @@ BEGIN
         dataout => out_teradder1(47 DOWNTO 32) --param??
     );
 
+    --SECOND ADDER-------------------------------------------------------------------
     ter_add4 : ternaryAdder
     GENERIC MAP(N => bits + 2)
     PORT MAP(
@@ -132,6 +137,9 @@ BEGIN
 
     sout_teradder2 <= SIGNED(out_teradder2);
 
+    --LB BUFFER------------------------------------------------------------------
+
+    --MUX
     muxBuffer : PROCESS (startLbuffer, out_buffer)
     BEGIN
         CASE startLbuffer IS
@@ -146,29 +154,34 @@ BEGIN
 
     in_buffer <= STD_LOGIC_VECTOR(sout_teradder2 + sout_mux_buffer);
 
-    LB : LinealBuffer
+    --BUFFER
+    LinBuff : DelayMem
     GENERIC MAP(
         BL => columns - 1, WL => WL)
     PORT MAP(
         clk => clk,
         reset => reset,
-        enable_LBuffer => enableLbuffer, --NO
-        datain => in_buffer,
-        dataout => out_buffer
+        validIn => enableLbuffer,
+        Din => in_buffer,
+        Dout => out_buffer
     );
 
+    --BATCH NORMALIZATION MUL-----------------------------------------------------
     sout_MUL <= signed(out_buffer) * Ynorm;
     out_MUL <= STD_LOGIC_VECTOR(sout_MUL);
-    qout_MUL <= out_MUL(16 + WL - 1 DOWNTO 16 + WL - 16);
+    qout_MUL <= out_MUL(16 + WL - 1 DOWNTO 16 + WL - 16); --quantification
 
+    --Leaky ReLu------------------------------------------------------------------
     f_act : LeakyReLU
     PORT MAP(
         datain => qout_MUL,
         dataout => out_leakyReLU
     );
 
+    --BATCH NORMALIZATION ADD-----------------------------------------------------
     out_add <= STD_LOGIC_VECTOR(signed(out_leakyReLU) + Bnorm);
 
+    --OUTPUT QUANTIFIED-----------------------------------------------------
     dataout <= out_add(15 DOWNTO 10);
 
 END ARCHITECTURE rtl;

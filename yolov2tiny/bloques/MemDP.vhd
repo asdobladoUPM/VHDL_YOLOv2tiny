@@ -6,6 +6,8 @@ USE IEEE.math_real.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--Bloque de datapath para la memoria de la capa 0(input) a la 8
+
 ENTITY MemDP IS
     GENERIC (
         layer : INTEGER := 4);
@@ -23,25 +25,25 @@ ENTITY MemDP IS
         kernelRow : IN INTEGER;
         ValidIN : IN STD_LOGIC;
 
-        Din : IN STD_LOGIC_VECTOR((kernels(layer) * bits(layer)) - 1 DOWNTO 0);
+        Din : IN STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
         we : IN STD_LOGIC;
         wMemOdd : IN STD_LOGIC;
         wBank : IN INTEGER;
         waddress : IN INTEGER;
 
-        Dout : OUT STD_LOGIC_VECTOR((9 * bits(layer)) - 1 DOWNTO 0);
+        Dout : OUT STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
 
         Weightaddress : IN INTEGER;
-        Weights : OUT STD_LOGIC_VECTOR(weightbits(layer)-1 DOWNTO 0));
+        Weights : OUT STD_LOGIC_VECTOR((9 * weightbits(layer + 1)) - 1 DOWNTO 0));
 END MemDP;
 
 ARCHITECTURE arch OF MemDP IS
 
-    CONSTANT bits : INTEGER := bits(layer);
-    CONSTANT weightbits : INTEGER := weightbits(layer);
-
+    CONSTANT bits : INTEGER := 6; --bits de datos
     CONSTANT bitsAddress : INTEGER := bitsAddress(layer);
-    CONSTANT weightbitaddress : INTEGER := weightsbitsAddress(layer);
+
+    CONSTANT weightbits : INTEGER := (9 * weightbits(layer + 1)); --bits de pesos para la siguiente etapa
+    CONSTANT weightbitaddress : INTEGER := weightsbitsAddress(layer + 1);
 
     COMPONENT MemToKernel
         GENERIC (
@@ -76,9 +78,11 @@ ARCHITECTURE arch OF MemDP IS
     END COMPONENT;
 
     SIGNAL DataOutRAM : STD_LOGIC_VECTOR((grid(layer) * bits) - 1 DOWNTO 0);
-    SIGNAL DataOutRAModd : STD_LOGIC_VECTOR((grid(layer) * bits) - 1 DOWNTO 0);
-    SIGNAL DataOutRAMeven : STD_LOGIC_VECTOR((grid(layer) * bits) - 1 DOWNTO 0);
+    TYPE vectordataOutRAM IS ARRAY (kernels(layer) - 1 DOWNTO 0) OF STD_LOGIC_VECTOR((grid(layer) * bits) - 1 DOWNTO 0);
 
+    SIGNAL vDataOutRAModd : vectordataOutRAM;
+    SIGNAL vDataOutRAMeven : vectordataOutRAM;
+    SIGNAL vDataOutRAM : vectordataOutRAM;
     SIGNAL weRAModd : STD_LOGIC_VECTOR(8 DOWNTO 0);
     SIGNAL weEXT : STD_LOGIC_VECTOR(8 DOWNTO 0);
     SIGNAL rmemoddEXT : STD_LOGIC_VECTOR(8 DOWNTO 0);
@@ -88,16 +92,13 @@ ARCHITECTURE arch OF MemDP IS
 
     SIGNAL std_waddress : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
     SIGNAL std_raddress : STD_LOGIC_VECTOR((9 * bitsAddress) - 1 DOWNTO 0);
-    SIGNAL std_rmem : STD_LOGIC_VECTOR(8 DOWNTO 0);
     SIGNAL std_address0 : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
     SIGNAL std_address1 : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
     SIGNAL std_address2 : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
     SIGNAL std_wadd : STD_LOGIC_VECTOR(bitsAddress - 1 DOWNTO 0);
-
-
 BEGIN
 
-std_wadd <=     STD_LOGIC_VECTOR(TO_UNSIGNED(Weightaddress,weightbitaddress));
+    std_wadd <= STD_LOGIC_VECTOR(TO_UNSIGNED(Weightaddress, weightbitaddress));
     weEXT <= (OTHERS => we);
     wMemOddEXT <= (OTHERS => wmemodd);
     weRAModd <= weEXT AND weBank AND wMemOddEXT;
@@ -111,32 +112,39 @@ std_wadd <=     STD_LOGIC_VECTOR(TO_UNSIGNED(Weightaddress,weightbitaddress));
 
     std_raddress <= std_address2 & std_address2 & std_address2 & std_address1 & std_address1 & std_address1 & std_address0 & std_address0 & std_address0;
 
+    --KERNEL
     MemToKernelBlock : MemToKernel
     GENERIC MAP(Layer => Layer)
     PORT MAP(
         clk => clk, reset => reset, oe => ValidIN, padding => padding,
         kernelCol => kernelCol, kernelRow => kernelRow, Din => DataOutRam, Dout => Dout);
 
+    --BLOQUES DE MEMORIA
     block_gen : FOR I IN 0 TO kernels(layer) - 1 GENERATE
-        mem_gen : FOR J IN 0 TO 8 GENERATE
 
+        --BANCOS DE MEMORIA
+        mem_gen : FOR J IN 0 TO 8 GENERATE
+            --IMPAR
             mem_odd : RAM GENERIC MAP(WL => bits, bitsAddress => bitsAddress)
             PORT MAP(
                 clk => clk, we => weRAModd(J),
                 Din => Din((I + 1) * bits - 1 DOWNTO I * bits),
                 rAddr => std_raddress((J + 1) * bitsAddress - 1 DOWNTO J * bitsAddress),
                 wAddr => std_waddress,
-                Dout => DataOutRAModd(((J + 1) * bits) - 1 DOWNTO J * bits));
+                Dout => vDataOutRAModd(I)(((J + 1) * bits) - 1 DOWNTO J * bits));
 
+            --PAR
             mem_even : RAM GENERIC MAP(WL => bits, bitsAddress => bitsAddress)
             PORT MAP(
                 clk => clk, we => weRAMeven(J),
                 Din => Din((I + 1) * bits - 1 DOWNTO I * bits),
                 rAddr => std_raddress((J + 1) * bitsAddress - 1 DOWNTO J * bitsAddress),
                 wAddr => std_waddress,
-                Dout => DataOutRAMeven(((J + 1) * bits) - 1 DOWNTO J * bits));
+                Dout => vDataOutRAMeven(I)(((J + 1) * bits) - 1 DOWNTO J * bits));
         END GENERATE mem_gen;
     END GENERATE block_gen;
+
+    --CONVERSION WEBANK A VECTOR
 
     webank_proc : PROCESS (wBank, we)
     BEGIN
@@ -154,41 +162,31 @@ std_wadd <=     STD_LOGIC_VECTOR(TO_UNSIGNED(Weightaddress,weightbitaddress));
         END CASE;
     END PROCESS webank_proc;
 
-    rmem_proc : PROCESS (rmem)
-    BEGIN
-        CASE rmem IS
-            WHEN 0 => std_rmem <= "000000001";
-            WHEN 1 => std_rmem <= "000000010";
-            WHEN 2 => std_rmem <= "000000100";
-            WHEN 3 => std_rmem <= "000001000";
-            WHEN 4 => std_rmem <= "000010000";
-            WHEN 5 => std_rmem <= "000100000";
-            WHEN 6 => std_rmem <= "001000000";
-            WHEN 7 => std_rmem <= "010000000";
-            WHEN 8 => std_rmem <= "100000000";
-            WHEN OTHERS => std_rmem <= (OTHERS => '0');
-        END CASE;
-    END PROCESS rmem_proc;
+    --SELECCION DE SALIDA 
 
-    dataout_proc : PROCESS (rmemodd, DataOutRAModd, DataOutRAMeven)
+    dataout_proc : PROCESS (rmemodd, vDataOutRAModd, vDataOutRAMeven)
     BEGIN
         CASE rmemodd IS
             WHEN '1' =>
-                DataOutRAM <= DataOutRAModd;
+                vDataOutRAM <= vDataOutRAModd;
             WHEN '0' =>
-                DataOutRAM <= DataOutRAMeven;
+                vDataOutRAM <= vDataOutRAMeven;
             WHEN OTHERS =>
-                DataOutRAM <= (OTHERS => '0');
+                vDataOutRAM <= (OTHERS => (OTHERS => '0'));
         END CASE;
     END PROCESS dataout_proc;
+
+    DataOutRAM <= vDataOutRAM(RMEM);
+
+    --MEMORIA DE PESOS
 
     mem_weights : RAM
     GENERIC MAP(WL => weightbits, bitsAddress => weightbitaddress)
     PORT MAP(
         clk => clk, we => '0',
-        Din => (others=>'0'),
+        Din => (OTHERS => '0'),
         rAddr => std_wadd,
-        wAddr => (others=>'0'),
+        wAddr => (OTHERS => '0'),
         Dout => Weights);
 
 END arch;

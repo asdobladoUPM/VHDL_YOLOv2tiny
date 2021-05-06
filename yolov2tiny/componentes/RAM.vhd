@@ -5,7 +5,7 @@ USE IEEE.NUMERIC_STD.ALL;
 ENTITY RAM IS
     GENERIC (
         WL : INTEGER := 8; -- Word Length
-        bitsAddress : INTEGER := 64); -- Address Length
+        bitsAddress : INTEGER := 64);
     PORT (
         clk : IN STD_LOGIC;
 
@@ -29,12 +29,12 @@ BEGIN
     BEGIN
         IF rising_edge(clk) THEN
 
-            Dout <= RAM_content(to_integer(unsigned(rAddr)));
+            Dout <= RAM_content(to_integer(unsigned(rAddr)));--salida registrada
 
             IF WE = '1' THEN
                 RAM_content(to_integer(unsigned(wAddr))) <= Din;
             END IF;
-        END IF;
 
-END PROCESS;
+        END IF;
+    END PROCESS;
 END arch;

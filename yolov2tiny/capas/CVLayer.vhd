@@ -5,15 +5,17 @@ USE IEEE.numeric_std.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--aqui compruebo la sinergia entre el bloque de control y el datapath para la capa de convolución
+
 ENTITY CVLayer IS
     GENERIC (Layer : INTEGER := 2);
     PORT (
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR ((grid(Layer) * 6) - 1 DOWNTO 0);
-        weights : IN STD_LOGIC_VECTOR ( grid(Layer) - 1 DOWNTO 0);
-        bias : IN signed ((2 * 16) - 1 DOWNTO 0);
+        datain : IN STD_LOGIC_VECTOR ((grid(Layer) * 6) - 1 DOWNTO 0); --vector de datos
+        weights : IN STD_LOGIC_VECTOR ( grid(Layer) - 1 DOWNTO 0); --vector de pesos
+        bias : IN signed ((2 * 16) - 1 DOWNTO 0); --coeficientes de la normalizacion
 
         validIn : IN STD_LOGIC;
 

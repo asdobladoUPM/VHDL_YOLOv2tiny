@@ -19,7 +19,7 @@ ENTITY RAM IS
 END RAM;
 ARCHITECTURE arch OF RAM IS
 
-    TYPE RAM_mem IS ARRAY (0 TO 2 ** bitsAddress - 1) OF STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
+    TYPE RAM_mem IS ARRAY (0 TO (2 ** bitsAddress) - 1) OF STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
 
     SIGNAL RAM_content : RAM_mem;
 

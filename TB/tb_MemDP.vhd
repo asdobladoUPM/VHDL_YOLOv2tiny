@@ -1,68 +1,73 @@
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
+-- Testbench created online at:
+--   https://www.doulos.com/knowhow/perl/vhdl-testbench-creation-using-perl/
+-- Copyright Doulos Ltd
 
-LIBRARY work;
-USE work.YOLO_pkg.ALL;
+LIBRARY IEEE;
+USE IEEE.Std_logic_1164.ALL;
+USE IEEE.Numeric_Std.ALL;
 
-ENTITY tb_MemDP IS
-END tb_MemDP;
+ENTITY MemDP_tb IS
+END;
 
-ARCHITECTURE tb OF tb_MemDP IS
+ARCHITECTURE bench OF MemDP_tb IS
 
     COMPONENT MemDP
         GENERIC (
-            layer : INTEGER := 1);
+            layer : INTEGER := 4);
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-            oe : IN STD_LOGIC;
+            ValidIN : IN STD_LOGIC;
             rMem : IN INTEGER;
-            rMemodd : IN STD_LOGIC;
+            rMemOdd : IN STD_LOGIC;
             address0 : IN INTEGER;
             address1 : IN INTEGER;
             address2 : IN INTEGER;
-            padding : IN STD_LOGIC_VECTOR (2 DOWNTO 0);
+            padding : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
             kernelCol : IN INTEGER;
             kernelRow : IN INTEGER;
-            Din : IN STD_LOGIC_VECTOR ((kernels(layer) * bits(layer)) - 1 DOWNTO 0);
+            Din : IN STD_LOGIC_VECTOR((6 * 2) - 1 DOWNTO 0);
             we : IN STD_LOGIC;
             wMemOdd : IN STD_LOGIC;
             wBank : IN INTEGER;
             waddress : IN INTEGER;
-            Dout : OUT STD_LOGIC_VECTOR ((9 * bits(layer)) - 1 DOWNTO 0));
+            Dout : OUT STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
+            Weightaddress : IN INTEGER;
+            Weights : OUT STD_LOGIC_VECTOR(8 DOWNTO 0));
     END COMPONENT;
 
     SIGNAL clk : STD_LOGIC;
     SIGNAL reset : STD_LOGIC;
-    SIGNAL oe : STD_LOGIC;
-    SIGNAL rMemodd : STD_LOGIC;
+    SIGNAL ValidIN : STD_LOGIC;
     SIGNAL rMem : INTEGER;
+    SIGNAL rMemOdd : STD_LOGIC;
     SIGNAL address0 : INTEGER;
     SIGNAL address1 : INTEGER;
     SIGNAL address2 : INTEGER;
-    SIGNAL padding : STD_LOGIC_VECTOR (2 DOWNTO 0);
+    SIGNAL padding : STD_LOGIC_VECTOR(2 DOWNTO 0);
     SIGNAL kernelCol : INTEGER;
     SIGNAL kernelRow : INTEGER;
-    SIGNAL Din : STD_LOGIC_VECTOR (2 * 6 - 1 DOWNTO 0);
+    SIGNAL Din : STD_LOGIC_VECTOR((2 * 6) - 1 DOWNTO 0);
     SIGNAL we : STD_LOGIC;
     SIGNAL wMemOdd : STD_LOGIC;
     SIGNAL wBank : INTEGER;
     SIGNAL waddress : INTEGER;
-    SIGNAL Dout : STD_LOGIC_VECTOR (9 * 6 - 1 DOWNTO 0);
+    SIGNAL Dout : STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
+    SIGNAL Weightaddress : INTEGER;
+    SIGNAL Weights : STD_LOGIC_VECTOR(8 DOWNTO 0);
 
-    CONSTANT TbPeriod : TIME := 10 ns; -- EDIT Put right period here
-    SIGNAL TbClock : STD_LOGIC := '0';
-    SIGNAL TbSimEnded : STD_LOGIC := '0';
-
+    CONSTANT clock_period : TIME := 10 ns;
+    SIGNAL stop_the_clock : BOOLEAN;
 BEGIN
 
-    dut : MemDP GENERIC MAP(layer => 10)
+    -- Insert values for generic parameters !!
+    uut : MemDP GENERIC MAP(layer =>3)
     PORT MAP(
         clk => clk,
         reset => reset,
-        oe => oe,
-        rmemodd => rmemodd,
+        ValidIN => ValidIN,
         rMem => rMem,
+        rMemOdd => rMemOdd,
         address0 => address0,
         address1 => address1,
         address2 => address2,
@@ -74,19 +79,14 @@ BEGIN
         wMemOdd => wMemOdd,
         wBank => wBank,
         waddress => waddress,
-        Dout => Dout);
-
-    -- Clock generation
-    TbClock <= NOT TbClock AFTER TbPeriod/2 WHEN TbSimEnded /= '1' ELSE
-        '0';
-
-    -- EDIT: Check that clk is really your main clock signal
-    clk <= TbClock;
+        Dout => Dout,
+        Weightaddress => Weightaddress,
+        Weights => Weights);
 
     stimuli : PROCESS
     BEGIN
         -- EDIT Adapt initialization as needed
-        oe <= '0';
+        validIn <= '0';
         rmemodd <= '0';
         rMem <= 0;
         address0 <= 0;
@@ -130,24 +130,25 @@ BEGIN
         waddress <= 1;
         WAIT FOR 10 ns;
         we <= '0';
-        oe <= '1';
+        validIn <= '1';
         rmem <= 1;
         rmemodd <= '0';
         address0 <= 0;
         address1 <= 1;
         address2 <= 3;
-        WAIT FOR 100 * TbPeriod;
+        WAIT FOR 100 * clock_period;
 
         -- Stop the clock and hence terminate the simulation
-        TbSimEnded <= '1';
+        stop_the_clock <= true;
         WAIT;
     END PROCESS;
 
-END tb;
-
--- Configuration block below is required by some simulators. Usually no need to edit.
-
-CONFIGURATION cfg_tb_MemLayer OF tb_MemDP IS
-    FOR tb
-    END FOR;
-END cfg_tb_MemLayer;
+    clocking : PROCESS
+    BEGIN
+        WHILE NOT stop_the_clock LOOP
+            clk <= '0', '1' AFTER clock_period / 2;
+            WAIT FOR clock_period;
+        END LOOP;
+        WAIT;
+    END PROCESS;
+END;

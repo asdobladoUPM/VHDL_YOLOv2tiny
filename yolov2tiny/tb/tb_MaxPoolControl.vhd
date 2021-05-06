@@ -2,12 +2,12 @@ LIBRARY IEEE;
 USE IEEE.Std_logic_1164.ALL;
 USE IEEE.Numeric_Std.ALL;
 
-ENTITY MPcontrol_tb IS
+ENTITY MaxPoolControl_tb IS
 END;
 
-ARCHITECTURE bench OF MPcontrol_tb IS
+ARCHITECTURE bench OF MaxPoolControl_tb IS
 
-    COMPONENT MPcontrol
+    COMPONENT MaxPoolControl
         GENERIC (
             layer : INTEGER
         );
@@ -34,7 +34,7 @@ ARCHITECTURE bench OF MPcontrol_tb IS
 BEGIN
 
     -- Insert values for generic parameters !!
-    uut : MPcontrol GENERIC MAP(
+    uut : MaxPoolControl GENERIC MAP(
         Layer => 5)
     PORT MAP(
         clk => clk,

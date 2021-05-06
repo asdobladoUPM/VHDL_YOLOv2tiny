@@ -5,6 +5,8 @@ USE IEEE.numeric_std.ALL;
 LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
+--Bloque de control para el MaxPooling
+
 ENTITY MaxPoolControl IS
     GENERIC (
         Layer : INTEGER
@@ -29,8 +31,7 @@ ARCHITECTURE rtl OF MaxPoolControl IS
 
     CONSTANT Hc : INTEGER := columns(layer);
     CONSTANT F : INTEGER := filters(layer);
-    CONSTANT k : INTEGER := kernels(layer);
-    CONSTANT Hr : INTEGER := rows(layer);
+    CONSTANT K : INTEGER := kernels(layer);
 
     SIGNAL count_col : INTEGER;
     SIGNAL count_ch : INTEGER;
@@ -40,39 +41,15 @@ ARCHITECTURE rtl OF MaxPoolControl IS
 
 BEGIN
 
-    comb_proc : PROCESS (validIn, col_odd, row_odd, count_col)
-    BEGIN
-
-        IF validIn = '1' THEN
-
-            val_d1 <= '1';
-
-            IF count_col = 0 THEN
-                validOut <= '0';
-                enLBuffer <= '0';
-            ELSE
-                validOut <= (col_odd NOR row_odd);
-                enLBuffer <= NOT(col_odd);
-            END IF;
-        ELSE
-            val_d1 <= '0';
-            validOut <= '0';
-            enLBuffer <= '0';
-        END IF;
-    END PROCESS comb_proc;
-
     clk_proc : PROCESS (clk, reset)
     BEGIN
+
         IF reset = rst_val THEN
 
-            --columnas
             col_odd <= '1';
-            count_col <= 0;
-
-            --filas
             row_odd <= '1';
 
-            --canales
+            count_col <= 0;
             count_ch <= 0;
 
         ELSIF rising_edge(clk) THEN
@@ -80,11 +57,11 @@ BEGIN
             IF validIn = '1' THEN
                 col_odd <= NOT(col_odd);
                 count_col <= count_col + 1;
-                IF count_col = Hc - 1 THEN
+                IF count_col = Hc - 1 THEN --final de fila
                     col_odd <= '1';
                     count_col <= 0;
                     count_ch <= count_ch + 1;
-                    IF count_ch = (F/K) - 1 THEN
+                    IF count_ch = (F/K) - 1 THEN --final del "canal" (realmente es el resultado de un filtro, o sea, el canal de la siguiente etapa)
                         count_ch <= 0;
                         row_odd <= NOT(row_odd);
                     END IF;
@@ -93,4 +70,18 @@ BEGIN
         END IF;
 
     END PROCESS clk_proc;
+
+    comb_proc : PROCESS (validIn, col_odd, row_odd, count_col)
+    BEGIN
+
+        IF validIn = '1' THEN
+            val_d1 <= '1'; -- si el dato es valido se registra
+            validOut <= (col_odd NOR row_odd);-- un dato es valido cuando es fila y columna par
+            enLBuffer <= NOT(col_odd); --cada dos datos se registra uno en LB
+        ELSE
+            val_d1 <= '0';
+            validOut <= '0';
+            enLBuffer <= '0';
+        END IF;
+    END PROCESS comb_proc;
 END ARCHITECTURE rtl;

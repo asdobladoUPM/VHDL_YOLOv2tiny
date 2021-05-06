@@ -18,7 +18,7 @@ ENTITY DelayMem IS
       reset : IN STD_LOGIC;
 
       validIn : IN STD_LOGIC;
-
+      
       Din : IN STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
       Dout : OUT STD_LOGIC_VECTOR(WL - 1 DOWNTO 0));
 END DelayMem;
@@ -28,19 +28,18 @@ ARCHITECTURE arch OF DelayMem IS
    TYPE memory IS ARRAY (BL - 1 DOWNTO 0) OF STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
    SIGNAL mem : memory;
    SIGNAL rdData : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
-
-   SIGNAL counter : unsigned(neededbits(BL - 1) DOWNTO 0);
+   SIGNAL counter : INTEGER:=0;
 
 BEGIN
 
    Control : PROCESS (reset, clk)
    BEGIN
       IF reset = '0' THEN
-         counter <= (OTHERS => '0');
+         counter <= 0;
       ELSIF rising_edge(clk) THEN
          IF validIn = '1' THEN
-            IF counter = to_unsigned(BL - 2, bits(BL - 1)) THEN
-               counter <= (OTHERS => '0');
+            IF counter = BL-1 THEN
+               counter <= 0;
             ELSE
                counter <= counter + 1;
             END IF;
@@ -52,12 +51,12 @@ BEGIN
    BEGIN
       IF rising_edge(clk) THEN
          IF validIn = '1' THEN
-            mem(to_integer(counter)) <= Din;
+            mem(counter) <= Din;
          END IF;
          Dout <= rdData;
       END IF;
    END PROCESS;
 
-   rdData <= mem(to_integer(counter));
+   rdData <= mem(counter);
 
 END arch;

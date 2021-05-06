@@ -16,8 +16,8 @@ ENTITY MemToKernel IS
         oe : IN STD_LOGIC;
 
         padding : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-        kernelCol : IN INTEGER;
-        kernelRow : IN INTEGER;
+        kernelCol : IN unsinged(1 DOWNTO 0);
+        kernelRow : IN unsinged(1 DOWNTO 0);
 
         Din : IN STD_LOGIC_VECTOR((grid(layer) * bits(layer)) - 1 DOWNTO 0);
         Dout : OUT STD_LOGIC_VECTOR(((grid(layer) * bits(layer))) - 1 DOWNTO 0));
@@ -34,15 +34,15 @@ BEGIN
     mux1 : PROCESS (kernelCol, Din)
     BEGIN
         CASE kernelCol IS
-            WHEN 0 => --MEM 0 MEM 3 MEM 6
+            WHEN "00" => --MEM 0 MEM 3 MEM 6
                 dataCol0 <= Din(bits(layer) - 1 DOWNTO 0);
                 dataCol1 <= Din(4 * bits(layer) - 1 DOWNTO 3 * bits(layer));
                 dataCol2 <= Din(7 * bits(layer) - 1 DOWNTO 6 * bits(layer));
-            WHEN 1 => --MEM 1 MEM 4 MEM 7
+            WHEN "01" => --MEM 1 MEM 4 MEM 7
                 dataCol0 <= Din(2 * bits(layer) - 1 DOWNTO bits(layer));
                 dataCol1 <= Din(5 * bits(layer) - 1 DOWNTO 4 * bits(layer));
                 dataCol2 <= Din(8 * bits(layer) - 1 DOWNTO 7 * bits(layer));
-            WHEN 2 => --MEM 2 MEM 5 MEM 8
+            WHEN "10" => --MEM 2 MEM 5 MEM 8
                 dataCol0 <= Din(3 * bits(layer) - 1 DOWNTO 2 * bits(layer));
                 dataCol1 <= Din(6 * bits(layer) - 1 DOWNTO 5 * bits(layer));
                 dataCol2 <= Din(9 * bits(layer) - 1 DOWNTO 8 * bits(layer));
@@ -57,15 +57,15 @@ BEGIN
     mux2 : PROCESS (kernelRow, dataCol0, dataCol1, dataCol2)
     BEGIN
         CASE kernelRow IS --ordena filaMem-filaKernel
-            WHEN 0 => -- 0-0 1-1 2-2
+            WHEN "00" => -- 0-0 1-1 2-2
                 dataRow0 <= dataCol0;
                 dataRow1 <= dataCol1;
                 dataRow2 <= dataCol2;
-            WHEN 1 =>-- 0-2 1-0 2-1
+            WHEN "01" => -- 0-2 1-0 2-1
                 dataRow0 <= dataCol1;
                 dataRow1 <= dataCol2;
                 dataRow2 <= dataCol0;
-            WHEN 2 =>-- 0-1 1-2 2-0
+            WHEN "10" => -- 0-1 1-2 2-0
                 dataRow0 <= dataCol2;
                 dataRow1 <= dataCol0;
                 dataRow2 <= dataCol1;

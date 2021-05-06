@@ -33,8 +33,8 @@ ARCHITECTURE rtl OF MaxPoolControl IS
     CONSTANT F : INTEGER := filters(layer);
     CONSTANT K : INTEGER := kernels(layer);
 
-    SIGNAL count_col : INTEGER;
-    SIGNAL count_ch : INTEGER;
+    SIGNAL count_col : unsigned(bits(Hc - 1) - 1 DOWNTO 0);
+    SIGNAL count_ch : unsigned(bits(F/K - 1) - 1 DOWNTO 0);
 
     SIGNAL col_odd : STD_LOGIC;
     SIGNAL row_odd : STD_LOGIC;
@@ -49,20 +49,20 @@ BEGIN
             col_odd <= '1';
             row_odd <= '1';
 
-            count_col <= 0;
-            count_ch <= 0;
+            count_col <= (OTHERS => '0');
+            count_ch <= (OTHERS => '0');
 
         ELSIF rising_edge(clk) THEN
 
             IF validIn = '1' THEN
                 col_odd <= NOT(col_odd);
                 count_col <= count_col + 1;
-                IF count_col = Hc - 1 THEN --final de fila
+                IF count_col = to_unsigned(Hc - 1, bits(Hc - 1)) THEN --final de fila
                     col_odd <= '1';
-                    count_col <= 0;
+                    count_col <= (OTHERS => '0');
                     count_ch <= count_ch + 1;
-                    IF count_ch = (F/K) - 1 THEN --final del "canal" (realmente es el resultado de un filtro, o sea, el canal de la siguiente etapa)
-                        count_ch <= 0;
+                    IF count_ch = to_unsigned((F/K) - 1, bits(F/K - 1)) THEN --final del "canal" (realmente es el resultado de un filtro, o sea, el canal de la siguiente etapa)
+                        count_ch <= (OTHERS => '0');
                         row_odd <= NOT(row_odd);
                     END IF;
                 END IF;
