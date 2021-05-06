@@ -29,7 +29,7 @@ ARCHITECTURE arch OF DelayMem IS
    SIGNAL mem : memory;
    SIGNAL rdData : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
 
-   SIGNAL counter : unsigned(neededbits(BL - 1) DOWNTO 0);
+   SIGNAL counter : unsigned(bits(BL - 1)-1 DOWNTO 0);
 
 BEGIN
 

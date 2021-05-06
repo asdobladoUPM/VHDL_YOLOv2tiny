@@ -16,8 +16,8 @@ ENTITY MemToKernel IS
         oe : IN STD_LOGIC;
 
         padding : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-        kernelCol : IN unsinged(1 DOWNTO 0);
-        kernelRow : IN unsinged(1 DOWNTO 0);
+        kernelCol : IN unsigned(1 DOWNTO 0);
+        kernelRow : IN unsigned(1 DOWNTO 0);
 
         Din : IN STD_LOGIC_VECTOR((grid(layer) * bits(layer)) - 1 DOWNTO 0);
         Dout : OUT STD_LOGIC_VECTOR(((grid(layer) * bits(layer))) - 1 DOWNTO 0));
