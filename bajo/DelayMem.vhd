@@ -27,8 +27,6 @@ ARCHITECTURE arch OF DelayMem IS
 
    TYPE memory IS ARRAY (BL - 1 DOWNTO 0) OF STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
    SIGNAL mem : memory;
-   SIGNAL rdData : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
-
    SIGNAL counter : unsigned(bits(BL - 1)-1 DOWNTO 0);
 
 BEGIN
@@ -39,7 +37,7 @@ BEGIN
          counter <= (OTHERS => '0');
       ELSIF rising_edge(clk) THEN
          IF validIn = '1' THEN
-            IF counter = to_unsigned(BL - 2, bits(BL - 1)) THEN
+            IF counter = to_unsigned(BL - 1, bits(BL - 1)) THEN
                counter <= (OTHERS => '0');
             ELSE
                counter <= counter + 1;
@@ -54,10 +52,9 @@ BEGIN
          IF validIn = '1' THEN
             mem(to_integer(counter)) <= Din;
          END IF;
-         Dout <= rdData;
       END IF;
    END PROCESS;
 
-   rdData <= mem(to_integer(counter));
+   Dout <= mem(to_integer(counter));
 
 END arch;

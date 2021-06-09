@@ -13,10 +13,9 @@ ENTITY ConvDP9 IS
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0); --datos de 6 bits
-        Weights : IN STD_LOGIC_VECTOR((8 * 9) - 1 DOWNTO 0); --pesos de 8 bits
-        Ynorm : IN signed(15 DOWNTO 0);
-        Bnorm : IN signed(15 DOWNTO 0);
+        datain : IN STD_LOGIC_VECTOR(5 DOWNTO 0); --datos de 6 bits
+        Weights : IN STD_LOGIC_VECTOR(7 DOWNTO 0); --pesos de 8 bits
+        BIAS: IN STD_LOGIC_VECTOR(15 DOWNTO 0);
 
         startLbuffer : IN STD_LOGIC;
         enableLbuffer : IN STD_LOGIC;
@@ -28,17 +27,8 @@ END ENTITY ConvDP9;
 ARCHITECTURE rtl OF ConvDP9 IS
 
     CONSTANT bits : INTEGER := 14;
-    CONSTANT grid : INTEGER := grid(layer);
     CONSTANT WL : INTEGER := bufferwidth(layer); -- Word Length
     CONSTANT columns : INTEGER := columns(layer);
-
-    COMPONENT ternaryAdder
-        GENERIC (N : INTEGER);
-        PORT (
-            A, B, C : IN STD_LOGIC_VECTOR(N - 1 DOWNTO 0);
-            dataout : OUT STD_LOGIC_VECTOR(N + 1 DOWNTO 0)
-        );
-    END COMPONENT;
 
     COMPONENT DelayMem
         GENERIC (
@@ -54,23 +44,11 @@ ARCHITECTURE rtl OF ConvDP9 IS
         );
     END COMPONENT;
 
-    COMPONENT LeakyReLU
-        PORT (
-            datain : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-            dataout : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
-        );
-    END COMPONENT;
+    SIGNAL Sdatain : SIGNED(5 DOWNTO 0);
+    SIGNAL Sweights : SIGNED(7 DOWNTO 0);
 
-    SIGNAL Sdatain : SIGNED(53 DOWNTO 0);
-    SIGNAL Sweights : SIGNED(71 DOWNTO 0);
-
-    SIGNAL sout_weight_mul : SIGNED(125 DOWNTO 0);
+    SIGNAL sout_weight_mul : SIGNED(13 DOWNTO 0);
     SIGNAL out_weight_mul : STD_LOGIC_VECTOR(125 DOWNTO 0);
-
-    SIGNAL out_teradder1 : STD_LOGIC_VECTOR(3 * 16 - 1 DOWNTO 0);
-
-    SIGNAL out_teradder2 : STD_LOGIC_VECTOR(17 DOWNTO 0);
-    SIGNAL sout_teradder2 : signed(17 DOWNTO 0);
 
     SIGNAL out_mux_buffer : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
     SIGNAL sout_mux_buffer : signed (WL - 1 DOWNTO 0);
@@ -78,64 +56,16 @@ ARCHITECTURE rtl OF ConvDP9 IS
     SIGNAL in_buffer : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
     SIGNAL out_buffer : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
     SIGNAL sout_buffer : SIGNED(WL - 1 DOWNTO 0);
+    SIGNAL SBIAS: SIGNED(15 DOWNTO 0);
 
-    SIGNAL sout_MUL : signed(16 + WL - 1 DOWNTO 0);
-    SIGNAL out_MUL : STD_LOGIC_VECTOR(16 + WL - 1 DOWNTO 0);
-    SIGNAL qout_MUL : STD_LOGIC_VECTOR(15 DOWNTO 0);
-    SIGNAL out_leakyReLU : STD_LOGIC_VECTOR(15 DOWNTO 0);
-
-    SIGNAL out_add : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL out_add : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
 BEGIN
 
     --WEIGHT MULTIPLICATION-------------------------------------------------------
     sDataIn <= signed(datain);
     sWeights <= signed(Weights);
 
-    WeightMUL : FOR I IN 0 TO 8 GENERATE
-        sout_weight_mul(((I + 1) * 14) - 1 DOWNTO (I * 14)) <= SdataIn(((I + 1) * 6) - 1 DOWNTO (I * 6)) * sWeights(((I + 1) * 8) - 1 DOWNTO (I * 8));
-    END GENERATE WeightMUL;
-
-    out_weight_mul <= STD_LOGIC_VECTOR(sout_weight_mul);
-
-    --FIRST ADDERS-------------------------------------------------------------------
-    ter_add1 : ternaryAdder
-    GENERIC MAP(N => bits)
-    PORT MAP(
-        A => out_weight_mul(bits - 1 DOWNTO 0),
-        B => out_weight_mul(2 * bits - 1 DOWNTO bits),
-        C => out_weight_mul(3 * bits - 1 DOWNTO 2 * bits),
-        dataout => out_teradder1(15 DOWNTO 0) --param??
-    );
-
-    ter_add2 : ternaryAdder
-    GENERIC MAP(N => bits)
-    PORT MAP(
-        A => out_weight_mul(4 * bits - 1 DOWNTO 3 * bits),
-        B => out_weight_mul(5 * bits - 1 DOWNTO 4 * bits),
-        C => out_weight_mul(6 * bits - 1 DOWNTO 5 * bits),
-        dataout => out_teradder1(31 DOWNTO 16) --param??
-    );
-
-    ter_add3 : ternaryAdder
-    GENERIC MAP(N => bits)
-    PORT MAP(
-        A => out_weight_mul(7 * bits - 1 DOWNTO 6 * bits),
-        B => out_weight_mul(8 * bits - 1 DOWNTO 7 * bits),
-        C => out_weight_mul(9 * bits - 1 DOWNTO 8 * bits),
-        dataout => out_teradder1(47 DOWNTO 32) --param??
-    );
-
-    --SECOND ADDER-------------------------------------------------------------------
-    ter_add4 : ternaryAdder
-    GENERIC MAP(N => bits + 2)
-    PORT MAP(
-        A => out_teradder1(15 DOWNTO 0),
-        B => out_teradder1(31 DOWNTO 16),
-        C => out_teradder1(47 DOWNTO 32),
-        dataout => out_teradder2
-    );
-
-    sout_teradder2 <= SIGNED(out_teradder2);
+    sout_weight_mul <= SdataIn * sWeights;
 
     --LB BUFFER------------------------------------------------------------------
 
@@ -152,12 +82,12 @@ BEGIN
 
     sout_mux_buffer <= SIGNED(out_mux_buffer);
 
-    in_buffer <= STD_LOGIC_VECTOR(sout_teradder2 + sout_mux_buffer);
+    in_buffer <= STD_LOGIC_VECTOR(sout_weight_mul + sout_mux_buffer);
 
     --BUFFER
     LinBuff : DelayMem
     GENERIC MAP(
-        BL => columns - 1, WL => WL)
+        BL => columns, WL => WL)
     PORT MAP(
         clk => clk,
         reset => reset,
@@ -166,22 +96,11 @@ BEGIN
         Dout => out_buffer
     );
 
-    --BATCH NORMALIZATION MUL-----------------------------------------------------
-    sout_MUL <= signed(out_buffer) * Ynorm;
-    out_MUL <= STD_LOGIC_VECTOR(sout_MUL);
-    qout_MUL <= out_MUL(16 + WL - 1 DOWNTO 16 + WL - 16); --quantification
+    --Bias ADD-----------------------------------------------------
+    SBIAS<=SIGNED(BIAS);
+    out_add <= STD_LOGIC_VECTOR(signed(out_buffer) + SBIAS);
 
-    --Leaky ReLu------------------------------------------------------------------
-    f_act : LeakyReLU
-    PORT MAP(
-        datain => qout_MUL,
-        dataout => out_leakyReLU
-    );
-
-    --BATCH NORMALIZATION ADD-----------------------------------------------------
-    out_add <= STD_LOGIC_VECTOR(signed(out_leakyReLU) + Bnorm);
-
-    --OUTPUT QUANTIFIED-----------------------------------------------------
-    dataout <= out_add(15 DOWNTO 10);
+    --OUTPUT-----------------------------------------------------
+    dataout <= out_add(WL-1 DOWNTO WL-16);
 
 END ARCHITECTURE rtl;

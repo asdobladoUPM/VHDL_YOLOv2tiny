@@ -18,7 +18,7 @@ ENTITY MemControl IS
 
         we : IN STD_LOGIC;
 
-        rMem : OUT unsigned(bits(kernels(layer) - 1) - 1 DOWNTO 0); --qué bloque se lee
+        rMem : OUT unsigned(bits(kernels(layer)) - 1 DOWNTO 0); --qué bloque se lee
         rMemOdd : OUT STD_LOGIC; --par o impar
         address0 : OUT unsigned(bitsAddress(layer) - 1 DOWNTO 0);
         --direcciones para cada banco
@@ -29,6 +29,7 @@ ENTITY MemControl IS
         padding : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
         kernelCol : OUT unsigned(1 DOWNTO 0); --para ordenar el kernel
         kernelRow : OUT unsigned(1 DOWNTO 0);
+        enableKernel : OUT STD_LOGIC;
         validOut : OUT STD_LOGIC;
 
         weRAM : OUT STD_LOGIC;
@@ -58,19 +59,16 @@ ARCHITECTURE arch OF MemControl IS
 
     SIGNAL s_kernelCol : unsigned(1 DOWNTO 0);
     SIGNAL s_kernelRow : unsigned(1 DOWNTO 0);
-    SIGNAL s_rmem : unsigned(bits(kernels(layer) - 1) - 1 DOWNTO 0);
+    SIGNAL s_rmem : unsigned(bits(kernels(layer)) - 1 DOWNTO 0);
 
     --señales lectura contadores
-    SIGNAL rcount_col : signed(bits(Hc - 1) - 1 DOWNTO 0);
+    SIGNAL rcount_col : signed(bits(Hc - 1) DOWNTO 0);
     SIGNAL rcount_row : unsigned(bits(Hr - 1) - 1 DOWNTO 0);
     SIGNAL rcount_ch : unsigned(bits(Ch - 1) - 1 DOWNTO 0);
     SIGNAL rcount_chMEM : unsigned(bits(Ch/K - 1) - 1 DOWNTO 0);
     SIGNAL rcount_fil : unsigned(bits(Fnext/Knext - 1) - 1 DOWNTO 0);
-
-    SIGNAL count_validout : unsigned(7 DOWNTO 0);
-
     --señales lectura dirección
-    CONSTANT raddOffset : unsigned(bitsAddress(layer) - 1 DOWNTO 0) := to_unsigned((INTEGER(ceil(real(Hc/3))) + 1) * (Ch/K), bitsAddress(layer) - 1);
+    CONSTANT raddOffset : unsigned(bitsAddress(layer) - 1 DOWNTO 0) := to_unsigned((INTEGER(ceil(real(Hc/3))) + 1) * (Ch/K), bitsAddress(layer));
 
     SIGNAL raddress : unsigned(bitsAddress(layer) - 1 DOWNTO 0);
     SIGNAL addrOffrow0 : unsigned(bitsAddress(layer) - 1 DOWNTO 0);
@@ -93,7 +91,7 @@ ARCHITECTURE arch OF MemControl IS
     SIGNAL wcount_data : unsigned(bits((Hr * Hc) * (Ch/K) - 1) DOWNTO 0);
 
     --señales escritura bancos
-    SIGNAL wbankOffset : unsigned(bits(kernels(layer) - 1) - 1 DOWNTO 0);
+    SIGNAL wbankOffset : unsigned(3 DOWNTO 0);
 
 BEGIN
 
@@ -108,6 +106,7 @@ BEGIN
     kernelrow <= s_kernelRow;
     rmem <= s_rmem;
     rmemodd <= NOT(s_wmemodd); --la memoria de la que se lee es siempre la contraria a la que se escribe
+    enableKernel <= oe;
 
     address0 <= raddress + addrOffrow0;
     address1 <= raddress + addrOffrow1;
@@ -125,21 +124,20 @@ BEGIN
 
             oe <= '0';
 
-            rcount_col <= to_signed(-2, bits(Hc - 1)); --desfase inicial para cargar el kernel
+            rcount_col <= to_signed(-1, bits(Hc - 1) + 1); --desfase inicial para cargar el kernel
             rcount_ch <= (OTHERS => '0');
             rcount_chMEM <= (OTHERS => '0');
 
             rcount_fil <= (OTHERS => '0');
             rcount_row <= (OTHERS => '0');
-            count_validout <= (OTHERS => '0');
 
             s_rmem <= (OTHERS => '0');
-            s_kernelCol <= "10"; --desfase
+            s_kernelCol <= "00";
             s_kernelrow <= "01"; --el dato cero esta en la f1 del kernel
 
             raddress <= (OTHERS => '0');
             rbase <= (OTHERS => '0');
-            rdir_deadline <= "110"; -- -2
+            rdir_deadline <= "111"; -- -1
             addcount_row <= (OTHERS => '0');
 
             --escritura
@@ -207,12 +205,10 @@ BEGIN
             --lectura
             IF oe = '1' THEN
                 --validOut
-                count_validout <= count_validout + 1;
-                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1)) THEN
+                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1) + 1) THEN
                     validOut <= '0';
-                ELSIF count_validout >= "00000001" THEN
+                ELSE
                     validOut <= '1';
-                    count_validout <= "00000001";
                 END IF;
 
                 --direccionymem
@@ -223,7 +219,7 @@ BEGIN
                     rdir_deadline <= "000";
                 END IF;
 
-                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1)) THEN --cambia de canal (ya incluye +1 col de padding)
+                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1) + 1) THEN --cambia de canal (ya incluye +1 col de padding)
                     raddress <= raddress + 1;
                     rdir_deadline <= "111";
                     rcount_chMEM <= rcount_chMEM + 1;
@@ -233,7 +229,7 @@ BEGIN
                         raddress <= rbase;
                         s_rmem <= s_rmem + 1;
 
-                        IF s_rmem = to_unsigned(K - 1, bits(K - 1)) THEN ---cambia de fila y de memoria
+                        IF s_rmem = to_unsigned(K - 1, bits(kernels(layer))) THEN ---cambia de fila y de memoria
                             s_rmem <= (OTHERS => '0');
 
                             IF rcount_fil = to_unsigned(Fnext/Knext - 1, bits(Fnext/Knext - 1)) THEN
@@ -243,11 +239,11 @@ BEGIN
                                     rbase <= raddress + 1;
                                     addcount_row <= (OTHERS => '0');
                                 END IF;
-                                
+
                                 IF rcount_row = to_unsigned(Hr - 1, bits(Hr - 1)) THEN -- ultimo dato
                                     rbase <= (OTHERS => '0');
                                     raddress <= (OTHERS => '0');
-                                    rdir_deadline <= "110";
+                                    rdir_deadline <= "111";
                                     addcount_row <= (OTHERS => '0');
                                 END IF;
                             END IF;
@@ -258,8 +254,8 @@ BEGIN
 
                 --contadores lectura
                 rcount_col <= rcount_col + 1;
-                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1)) THEN --cambia de canal (incluye +1 col de padding)
-                    rcount_col <= to_signed(-1, bits(Hc - 1));
+                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1) + 1) THEN --cambia de canal (incluye +1 col de padding)
+                    rcount_col <= to_signed(-1, bits(Hc - 1) + 1);
                     rcount_ch <= rcount_ch + 1;
 
                     IF rcount_ch = to_unsigned(Ch - 1, bits(Ch - 1)) THEN --cambia de filtro
@@ -272,10 +268,9 @@ BEGIN
 
                             IF rcount_row = to_unsigned(Hr - 1, bits(Hr - 1)) THEN -- ultimo dato
                                 rcount_row <= (OTHERS => '0');
-                                rcount_col <= to_signed(-2, bits(Hc - 1));
+                                rcount_col <= to_signed(-1, bits(Hc - 1) + 1);
                                 rcount_ch <= (OTHERS => '0');
                                 s_rmem <= (OTHERS => '0');
-                                count_validout <= (OTHERS => '0');
                                 validOut <= '0';
                                 oe <= '0'; --no se permite leer hasta pasado el siguiente delay
                             END IF;
@@ -291,19 +286,19 @@ BEGIN
                     WHEN OTHERS => s_kernelCol <= "00";
                 END CASE;
 
-                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1)) THEN --cambia de canal
+                IF rcount_col = to_signed((Hc - 1), bits(Hc - 1) + 1) THEN --cambia de canal
                     s_kernelCol <= "00";
                 END IF;
 
-                IF s_rmem = to_unsigned(K - 1, bits(K - 1)) AND rcount_fil = to_unsigned(Fnext/Knext - 1, bits(Fnext/Knext - 1))
-                    AND rcount_ch = to_unsigned(Ch - 1, bits(Ch - 1)) AND rcount_col = to_signed((Hc - 1), bits(Hc - 1)) THEN ---cambia de fila
+                IF s_rmem = to_unsigned(K - 1, bits(kernels(layer))) AND rcount_fil = to_unsigned(Fnext/Knext - 1, bits(Fnext/Knext - 1))
+                    AND rcount_ch = to_unsigned(Ch - 1, bits(Ch - 1)) AND rcount_col = to_signed((Hc - 1), bits(Hc - 1) + 1) THEN ---cambia de fila
                     s_kernelrow <= s_kernelrow - 1;
                     IF s_kernelrow = "00" THEN
                         s_kernelrow <= "10";
                     END IF;
                     IF rcount_row = to_unsigned(Hr - 1, bits(Hr - 1)) THEN -- ultimo dato
                         s_kernelrow <= "01";
-                        s_kernelCol <= "10";
+                        s_kernelCol <= "00";
                     END IF;
                 END IF;
             ELSE
@@ -340,24 +335,11 @@ BEGIN
     --padding
     padding_proc : PROCESS (rcount_row, rcount_col, rcount_ch, s_rmem)
     BEGIN
-        IF rcount_col = to_signed(-2, bits(Hc - 1)) THEN
+        IF rcount_col = to_signed((Hc - 1), bits(Hc - 1) + 1) THEN --final fila
             padding <= "111";
-        ELSIF rcount_col = to_signed((Hc - 1), bits(Hc - 1)) THEN
-            padding <= "111";
-        ELSIF rcount_row = to_unsigned(0, bits(Hr - 1)) THEN
+        ELSIF rcount_row = to_unsigned(0, bits(Hr - 1)) THEN --primera fila
             padding <= "100";
-            IF rcount_col = to_signed(Hc, bits(Hc - 1)) THEN
-                padding <= "000";
-            END IF;
-        ELSIF rcount_row = to_unsigned(Hr - 1, bits(Hr - 1)) THEN
-            padding <= "001";
-            IF rcount_col = to_signed(Hc, bits(Hc - 1)) THEN
-                padding <= "001";
-                IF rcount_ch = to_unsigned(Ch/K - 1, bits(Ch - 1)) AND s_rmem = to_unsigned(K - 1, bits(K - 1)) THEN
-                    padding <= "100";
-                END IF;
-            END IF;
-        ELSIF rcount_row = to_unsigned(Hr - 2, bits(Hr - 1)) AND rcount_col = to_signed(Hc, bits(Hc - 1)) THEN
+        ELSIF rcount_row = to_unsigned(Hr - 1, bits(Hr - 1)) THEN --ultima fila
             padding <= "001";
         ELSE
             padding <= "000";

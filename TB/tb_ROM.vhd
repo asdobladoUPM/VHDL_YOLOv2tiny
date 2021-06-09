@@ -7,7 +7,7 @@ END;
 
 ARCHITECTURE bench OF L1BNROM_tb IS
 
-    COMPONENT L1BNROM
+    COMPONENT L8WROM
         PORT (
             weight : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
             address : IN unsigned(3 DOWNTO 0));
@@ -18,7 +18,7 @@ ARCHITECTURE bench OF L1BNROM_tb IS
 
 BEGIN
 
-    uut : L1BNROM PORT MAP(
+    uut : L8WROM PORT MAP(
         weight => weight,
         address => address);
 

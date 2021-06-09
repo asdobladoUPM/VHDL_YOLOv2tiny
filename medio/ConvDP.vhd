@@ -13,7 +13,7 @@ ENTITY ConvDP IS
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0); --vector de datos de entrada
+        datain : IN STD_LOGIC_VECTOR((9 * layerbits(layer)) - 1 DOWNTO 0); --vector de datos de entrada
         Weights : IN STD_LOGIC_VECTOR(8 DOWNTO 0); --vector de 9 pesos binarios
         Ynorm : IN signed(15 DOWNTO 0); --coef1 de BN
         Bnorm : IN signed(15 DOWNTO 0); --coef2 de BN
@@ -27,16 +27,17 @@ END ENTITY ConvDP;
 
 ARCHITECTURE rtl OF ConvDP IS
 
-    CONSTANT bits : INTEGER := 6;
+    CONSTANT bits : INTEGER := layerbits(layer);
     CONSTANT grid : INTEGER := 9;
     CONSTANT WL : INTEGER := bufferwidth(layer); -- ancho del buffer
     CONSTANT columns : INTEGER := columns(layer);
 
     COMPONENT signedInverse
+        GENERIC (N : INTEGER);
         PORT (
-            datain : IN STD_LOGIC_VECTOR(bits - 1 DOWNTO 0);
+            datain : IN STD_LOGIC_VECTOR(N - 1 DOWNTO 0);
             Weights : IN STD_LOGIC;
-            dataout : OUT STD_LOGIC_VECTOR(bits - 1 DOWNTO 0)
+            dataout : OUT STD_LOGIC_VECTOR(N - 1 DOWNTO 0)
         );
     END COMPONENT;
 
@@ -73,8 +74,8 @@ ARCHITECTURE rtl OF ConvDP IS
 
     SIGNAL out_teradder1 : STD_LOGIC_VECTOR((3 * (bits + 2)) - 1 DOWNTO 0);
 
-    SIGNAL out_teradder2 : STD_LOGIC_VECTOR(9 DOWNTO 0);
-    SIGNAL sout_teradder2 : signed(9 DOWNTO 0);
+    SIGNAL out_teradder2 : STD_LOGIC_VECTOR(bits + 4 - 1 DOWNTO 0);
+    SIGNAL sout_teradder2 : signed(bits + 4 - 1 DOWNTO 0);
 
     SIGNAL out_mux_buffer : STD_LOGIC_VECTOR(WL - 1 DOWNTO 0);
     SIGNAL sout_mux_buffer : signed (WL - 1 DOWNTO 0);
@@ -95,6 +96,7 @@ BEGIN
 
     sig_inv : FOR I IN 1 TO 9 GENERATE
         UX : signedInverse
+        GENERIC MAP(N => bits)
         PORT MAP(
             datain => datain((I * bits) - 1 DOWNTO (I * bits) - bits),
             Weights => Weights(I - 1),
@@ -110,7 +112,7 @@ BEGIN
         A => out_signedInverse(bits - 1 DOWNTO 0),
         B => out_signedInverse((2 * bits) - 1 DOWNTO bits),
         C => out_signedInverse((3 * bits) - 1 DOWNTO 2 * bits),
-        dataout => out_teradder1(7 DOWNTO 0)
+        dataout => out_teradder1((bits - 1) + 2 DOWNTO 0)
     );
 
     ter_add2 : ternaryAdder
@@ -119,7 +121,7 @@ BEGIN
         A => out_signedInverse((4 * bits) - 1 DOWNTO 3 * bits),
         B => out_signedInverse((5 * bits) - 1 DOWNTO 4 * bits),
         C => out_signedInverse((6 * bits) - 1 DOWNTO 5 * bits),
-        dataout => out_teradder1(15 DOWNTO 8)
+        dataout => out_teradder1(2 * ((bits - 1) + 3) - 1 DOWNTO (bits - 1) + 3)
     );
 
     ter_add3 : ternaryAdder
@@ -128,7 +130,7 @@ BEGIN
         A => out_signedInverse((7 * bits) - 1 DOWNTO 6 * bits),
         B => out_signedInverse((8 * bits) - 1 DOWNTO 7 * bits),
         C => out_signedInverse((9 * bits) - 1 DOWNTO 8 * bits),
-        dataout => out_teradder1(23 DOWNTO 16)
+        dataout => out_teradder1(3 * ((bits - 1) + 3) - 1 DOWNTO 2*((bits - 1) + 3))
     );
 
     --SECOND ADDER----------------------------------------------------------------
@@ -136,9 +138,9 @@ BEGIN
     ter_add4 : ternaryAdder
     GENERIC MAP(N => bits + 2)
     PORT MAP(
-        A => out_teradder1(7 DOWNTO 0),
-        B => out_teradder1(15 DOWNTO 8),
-        C => out_teradder1(23 DOWNTO 16),
+        A => out_teradder1((bits - 1) + 2 DOWNTO 0),
+        B => out_teradder1(2 * ((bits - 1) + 3) - 1 DOWNTO (bits - 1) + 3),
+        C => out_teradder1(3 * ((bits - 1) + 3) - 1 DOWNTO 2 * ((bits - 1) + 3)),
         dataout => out_teradder2
     );
 
@@ -164,7 +166,7 @@ BEGIN
     --BUFFER
     LinBuff : DelayMem
     GENERIC MAP(
-        BL => columns - 1, WL => WL) 
+        BL => columns, WL => WL)
     PORT MAP(
         clk => clk,
         reset => reset,

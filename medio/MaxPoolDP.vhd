@@ -16,17 +16,17 @@ ENTITY MaxPoolDP IS
         val_d1 : IN STD_LOGIC;
         enLBuffer : IN STD_LOGIC;
 
-        datain : IN STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0);
+        datain : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
 
-        dataout : OUT STD_LOGIC_VECTOR((bits(layer) - 1) DOWNTO 0)
+        dataout : OUT STD_LOGIC_VECTOR(5 DOWNTO 0)
     );
 END ENTITY MaxPoolDP;
 
 ARCHITECTURE rtl OF MaxPoolDP IS
 
     CONSTANT rst_val : STD_LOGIC := '0';
-    CONSTANT WL : INTEGER := bits(layer); -- Word Length
-    CONSTANT BL : INTEGER := ((filters(layer)/kernels(layer)) * columns(layer)/2) - 1;
+    CONSTANT WL : INTEGER := 6; -- Word Length
+    CONSTANT BL : INTEGER := ((filters(layer)/kernels(layer)) * columns(layer)/2);
 
     COMPONENT DelayMem
         GENERIC (
@@ -42,7 +42,7 @@ ARCHITECTURE rtl OF MaxPoolDP IS
         );
     END COMPONENT;
 
-    SIGNAL zeroes : STD_LOGIC_VECTOR((WL - 2) DOWNTO 0);
+    CONSTANT zeroes : STD_LOGIC_VECTOR((WL - 2) DOWNTO 0):=(OTHERS=>'0');
 
     SIGNAL s_datain : SIGNED((WL - 1) DOWNTO 0);
 
@@ -56,7 +56,6 @@ BEGIN
 
     s_datain <= SIGNED(datain);
     sLBo <= signed(LBo);
-    zeroes <= (OTHERS => '0');
     sd1 <= signed(d1);
 
     sec : PROCESS (clk, reset)

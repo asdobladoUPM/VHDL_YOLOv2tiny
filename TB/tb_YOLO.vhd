@@ -4,6 +4,9 @@ USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 USE IEEE.MATH_REAL.ALL;
 
+LIBRARY work;
+USE work.YOLO_pkg.ALL;
+
 LIBRARY STD;
 USE STD.TEXTIO.ALL;
 
@@ -17,7 +20,7 @@ ARCHITECTURE behavior OF tb_YOLO IS
 
    CONSTANT clk_period : TIME := 10 ns;
 
-   COMPONENT YOLOv2Tiny IS
+   COMPONENT layer1 IS
       PORT (
       reset : IN STD_LOGIC;
       clk : IN STD_LOGIC;
@@ -35,7 +38,7 @@ ARCHITECTURE behavior OF tb_YOLO IS
       In8 : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
       -- Salidas de YOLO.  
       DataOut : OUT STD_LOGIC_VECTOR(5 DOWNTO 0);
-      validOut : STD_LOGIC);
+      validOut : OUT STD_LOGIC);
    END COMPONENT;
    -- Archivos de texto
 
@@ -43,7 +46,7 @@ ARCHITECTURE behavior OF tb_YOLO IS
    FILE salida : TEXT IS OUT "C:\Users\asdob\Google Drive\MUISE\TFM\matlab\ImageOut.txt";
 
    -- Senales de control
-   CONSTANT latencia : INTEGER :=  0;-- ADJUST --
+   CONSTANT latencia : INTEGER := delaymem(1);
 
    SIGNAL start : STD_LOGIC;
    SIGNAL ValidIn : STD_LOGIC;
@@ -58,7 +61,7 @@ ARCHITECTURE behavior OF tb_YOLO IS
 
 BEGIN
 
-   YOLO : YOLOv2Tiny 
+   YOLO : layer1 
    PORT MAP(
       reset => reset,
       start => start,

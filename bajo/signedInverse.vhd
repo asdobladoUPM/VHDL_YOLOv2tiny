@@ -6,17 +6,18 @@ LIBRARY work;
 USE work.YOLO_pkg.ALL;
 
 ENTITY signedInverse IS
+    GENERIC (N : INTEGER:=6);
     PORT (
-        datain : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
+        datain : IN STD_LOGIC_VECTOR(N-1 DOWNTO 0);
         Weights : IN STD_LOGIC;
-        dataout : OUT STD_LOGIC_VECTOR(5 DOWNTO 0)
+        dataout : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0)
     );
 END ENTITY signedInverse;
 
 ARCHITECTURE rtl OF signedInverse IS
 
-    SIGNAL s_input : signed(5 DOWNTO 0);
-    SIGNAL s_output : signed(5 DOWNTO 0);
+    SIGNAL s_input : signed(N-1 DOWNTO 0);
+    SIGNAL s_output : signed(N-1 DOWNTO 0);
 
 BEGIN
 

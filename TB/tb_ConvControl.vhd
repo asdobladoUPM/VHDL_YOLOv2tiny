@@ -2,6 +2,9 @@ LIBRARY IEEE;
 USE IEEE.Std_logic_1164.ALL;
 USE IEEE.Numeric_Std.ALL;
 
+LIBRARY work;
+USE work.YOLO_pkg.ALL;
+
 ENTITY tb_ConvControl IS
 END;
 
@@ -18,7 +21,9 @@ ARCHITECTURE bench OF tb_ConvControl IS
 
       startLBuffer : OUT STD_LOGIC;
       enableLBuffer : OUT STD_LOGIC;
-      validOut : OUT STD_LOGIC
+      validOut : OUT STD_LOGIC;
+      addressweight : OUT unsigned(weightsbitsAddress(LAYER) - 1 DOWNTO 0);
+        addressbn : OUT unsigned(bits(filters(layer)/kernels(layer) - 1) - 1 DOWNTO 0)
     );
   END COMPONENT;
 
@@ -28,6 +33,8 @@ ARCHITECTURE bench OF tb_ConvControl IS
   SIGNAL startLBuffer : STD_LOGIC;
   SIGNAL enableLBuffer : STD_LOGIC;
   SIGNAL validOut : STD_LOGIC;
+  SIGNAL addressweight : unsigned(weightsbitsAddress(1) - 1 DOWNTO 0);
+  SIGNAL addressbn : unsigned(bits(filters(1)/kernels(1) - 1) - 1 DOWNTO 0);
 
   CONSTANT clock_period : TIME := 10 ns;
   SIGNAL stop_the_clock : BOOLEAN;
@@ -36,14 +43,16 @@ BEGIN
 
   -- Insert values for generic parameters !!
   uut : ConvControl GENERIC MAP(
-    layer => 6)
+    layer => 1)
   PORT MAP(
     clk => clk,
     reset => reset,
     validIn => validIn,
     startLBuffer => startLBuffer,
     enableLBuffer => enableLBuffer,
-    validOut => validOut);
+    validOut => validOut,
+    addressweight => addressweight,
+    addressbn => addressbn);
 
   stimulus : PROCESS
   BEGIN
@@ -51,16 +60,16 @@ BEGIN
     -- Put initialisation code here
     reset <= '0';
     validIn <= '0';
-    wait for 20 ns;
+    WAIT FOR 20 ns;
     -- Put test bench stimulus code here
 
     reset <= '1';
 
-    wait for 15 ns;
+    WAIT FOR 15 ns;
 
     validIn <= '1';
 
-    wait for 1000 ms;
+    WAIT FOR 1000 ms;
 
     stop_the_clock <= true;
     WAIT;

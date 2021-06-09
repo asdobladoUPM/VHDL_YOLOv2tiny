@@ -1,10 +1,9 @@
--- Testbench created online at:
---   https://www.doulos.com/knowhow/perl/vhdl-testbench-creation-using-perl/
--- Copyright Doulos Ltd
-
 LIBRARY IEEE;
 USE IEEE.Std_logic_1164.ALL;
 USE IEEE.Numeric_Std.ALL;
+
+LIBRARY work;
+USE work.YOLO_pkg.ALL;
 
 ENTITY MemDP_tb IS
 END;
@@ -17,92 +16,87 @@ ARCHITECTURE bench OF MemDP_tb IS
         PORT (
             clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-            ValidIN : IN STD_LOGIC;
-            rMem : IN INTEGER;
+            Din : IN STD_LOGIC_VECTOR((kernels(layer) * 6) - 1 DOWNTO 0);
+            rMem : IN unsigned(bits(kernels(layer)) - 1 DOWNTO 0);
             rMemOdd : IN STD_LOGIC;
-            address0 : IN INTEGER;
-            address1 : IN INTEGER;
-            address2 : IN INTEGER;
+            address0 : IN unsigned(bitsAddress(layer) - 1 DOWNTO 0);
+            address1 : IN unsigned(bitsAddress(layer) - 1 DOWNTO 0);
+            address2 : IN unsigned(bitsAddress(layer) - 1 DOWNTO 0);
+            oe : IN STD_LOGIC;
             padding : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            kernelCol : IN INTEGER;
-            kernelRow : IN INTEGER;
-            Din : IN STD_LOGIC_VECTOR((6 * 2) - 1 DOWNTO 0);
+            kernelCol : IN unsigned(1 DOWNTO 0);
+            kernelRow : IN unsigned(1 DOWNTO 0);
             we : IN STD_LOGIC;
             wMemOdd : IN STD_LOGIC;
-            wBank : IN INTEGER;
-            waddress : IN INTEGER;
-            Dout : OUT STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
-            Weightaddress : IN INTEGER;
-            Weights : OUT STD_LOGIC_VECTOR(8 DOWNTO 0));
+            wBank : IN unsigned(3 DOWNTO 0);
+            waddress : IN unsigned(bitsAddress(layer) - 1 DOWNTO 0);
+            Dout : OUT STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0));
     END COMPONENT;
+    
 
     SIGNAL clk : STD_LOGIC;
+        CONSTANT clock_period : TIME := 10 ns;
+    SIGNAL stop_the_clock : BOOLEAN;
     SIGNAL reset : STD_LOGIC;
-    SIGNAL ValidIN : STD_LOGIC;
-    SIGNAL rMem : INTEGER;
+    SIGNAL Din : STD_LOGIC_VECTOR((kernels(1) * 6) - 1 DOWNTO 0);
+    SIGNAL rMem : unsigned(bits(kernels(1)) - 1 DOWNTO 0);
     SIGNAL rMemOdd : STD_LOGIC;
-    SIGNAL address0 : INTEGER;
-    SIGNAL address1 : INTEGER;
-    SIGNAL address2 : INTEGER;
+    SIGNAL address0 : unsigned(bitsAddress(1) - 1 DOWNTO 0);
+    SIGNAL address1 : unsigned(bitsAddress(1) - 1 DOWNTO 0);
+    SIGNAL address2 : unsigned(bitsAddress(1) - 1 DOWNTO 0);
+    SIGNAL oe : STD_LOGIC;
     SIGNAL padding : STD_LOGIC_VECTOR(2 DOWNTO 0);
-    SIGNAL kernelCol : INTEGER;
-    SIGNAL kernelRow : INTEGER;
-    SIGNAL Din : STD_LOGIC_VECTOR((2 * 6) - 1 DOWNTO 0);
+    SIGNAL kernelCol : unsigned(1 DOWNTO 0);
+    SIGNAL kernelRow : unsigned(1 DOWNTO 0);
     SIGNAL we : STD_LOGIC;
     SIGNAL wMemOdd : STD_LOGIC;
-    SIGNAL wBank : INTEGER;
-    SIGNAL waddress : INTEGER;
+    SIGNAL wBank : unsigned(3 DOWNTO 0);
+    SIGNAL waddress : unsigned(bitsAddress(1) - 1 DOWNTO 0);
     SIGNAL Dout : STD_LOGIC_VECTOR((9 * 6) - 1 DOWNTO 0);
-    SIGNAL Weightaddress : INTEGER;
-    SIGNAL Weights : STD_LOGIC_VECTOR(8 DOWNTO 0);
 
-    CONSTANT clock_period : TIME := 10 ns;
-    SIGNAL stop_the_clock : BOOLEAN;
 BEGIN
 
     -- Insert values for generic parameters !!
-    uut : MemDP GENERIC MAP(layer =>3)
+    uut : MemDP GENERIC MAP(layer => 1)
     PORT MAP(
         clk => clk,
         reset => reset,
-        ValidIN => ValidIN,
+        Din => Din,
         rMem => rMem,
         rMemOdd => rMemOdd,
         address0 => address0,
         address1 => address1,
         address2 => address2,
+        oe => oe,
         padding => padding,
         kernelCol => kernelCol,
         kernelRow => kernelRow,
-        Din => Din,
         we => we,
         wMemOdd => wMemOdd,
         wBank => wBank,
         waddress => waddress,
-        Dout => Dout,
-        Weightaddress => Weightaddress,
-        Weights => Weights);
+        Dout => Dout);
 
     stimuli : PROCESS
     BEGIN
         -- EDIT Adapt initialization as needed
-        validIn <= '0';
-        rmemodd <= '0';
-        rMem <= 0;
-        address0 <= 0;
-        address1 <= 1;
-        address2 <= 2;
-
-        padding <= (OTHERS => '0');
-        kernelCol <= 0;
-        kernelRow <= 0;
-
-        Din <= "000001" & "111111";
-
-        we <= '0';
-        wMemOdd <= '0';
-        wBank <= 0;
-        waddress <= 0;
+        --OE <= '0';
+        --rmemodd <= '0';
+        --rMem <= to_unsigned(0, bits(kernels(2)));
+        --address0 <= to_unsigned(0, bitsAddress(2));
+        --address1 <= to_unsigned(1, bitsAddress(2));
+        --address2 <= to_unsigned(2, bitsAddress(2));
+--
+        --padding <= (OTHERS => '0');
+        --kernelCol <= (OTHERS => '0');
+        --kernelRow <= (OTHERS => '0');
+--
+        --Din <= "000001"&"111111";
+--
+        --we <= '0';
+        --wMemOdd <= '0';
+        --wBank <= (OTHERS => '0');
+        --waddress <= (OTHERS => '0');
 
         -- Reset generation
         -- EDIT: Check that reset is really your reset signal
@@ -111,31 +105,30 @@ BEGIN
         reset <= '1';
         WAIT FOR 100 ns;
 
-        -- EDIT Add stimuli here
-        we <= '1';
-        WAIT FOR 10 ns;
-        wBank <= 0;
-        waddress <= 1;
-        WAIT FOR 10 ns;
-        wBank <= 0;
-        waddress <= 1;
-        WAIT FOR 10 ns;
-        wBank <= 0;
-        waddress <= 3;
-        WAIT FOR 10 ns;
-        wBank <= 2;
-        waddress <= 1;
-        WAIT FOR 10 ns;
-        wBank <= 4;
-        waddress <= 1;
-        WAIT FOR 10 ns;
-        we <= '0';
-        validIn <= '1';
-        rmem <= 1;
-        rmemodd <= '0';
-        address0 <= 0;
-        address1 <= 1;
-        address2 <= 3;
+        ---- EDIT Add stimuli here
+        --we <= '1';
+        --wmemodd <= '1';
+        --wbank <= "0011";
+        --waddress <= (others => '0');
+        --wait for 10 ns;
+        --we <= '0';
+        --rmem <= (others => '0');
+        --rmemodd <= '1';
+        --address0 <= (others => '0');
+        --address1 <= (others => '0');
+        --address2 <= (others => '0');
+        --oe <= '1';
+        --padding <= (others => '0');
+        --wait for 10 ns;
+        --rmem <= "01";
+        --rmemodd <= '1';
+        --address0 <= (others => '0');
+        --address1 <= (others => '0');
+        --address2 <= (others => '0');
+        --oe <= '1';
+        --padding <= (others => '0');
+        --wait for 10 ns;
+
         WAIT FOR 100 * clock_period;
 
         -- Stop the clock and hence terminate the simulation
@@ -151,4 +144,5 @@ BEGIN
         END LOOP;
         WAIT;
     END PROCESS;
+
 END;

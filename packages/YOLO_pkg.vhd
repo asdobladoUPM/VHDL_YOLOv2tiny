@@ -8,7 +8,7 @@ PACKAGE YOLO_pkg IS
 
   FUNCTION bits (L : INTEGER) RETURN INTEGER; -- Given a positive integer number, it returns the number of bits needed to represent it in unsinged.
 
-	FUNCTION nextPow2 (L : INTEGER) RETURN INTEGER; -- Given an integer number, it returns the smallest power of 2 that is larger than that integer. 
+  FUNCTION nextPow2 (L : INTEGER) RETURN INTEGER; -- Given an integer number, it returns the smallest power of 2 that is larger than that integer. 
 
   FUNCTION rows(layer : IN INTEGER := 1) RETURN INTEGER;
 
@@ -52,19 +52,19 @@ PACKAGE BODY YOLO_pkg IS
   END;
 
   FUNCTION nextPow2 (L : INTEGER) RETURN INTEGER IS
-	BEGIN
-		IF L = 0 THEN
-			RETURN 0;
-		END IF;
+  BEGIN
+    IF L = 0 THEN
+      RETURN 0;
+    END IF;
 
-		FOR i IN 0 TO 100 LOOP
-			IF L < 2 ** i + 1 THEN
-				RETURN 2 ** i;
-			END IF;
-		END LOOP;
+    FOR i IN 0 TO 100 LOOP
+      IF L < 2 ** i + 1 THEN
+        RETURN 2 ** i;
+      END IF;
+    END LOOP;
 
-		RETURN -1;
-	END;
+    RETURN -1;
+  END;
 
   FUNCTION rows(layer : IN INTEGER := 1) RETURN INTEGER IS
     VARIABLE rows : INTEGER;
@@ -129,9 +129,9 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 8 =>
         filters := 1024;
       WHEN 9 =>
-        filters := 128;
+        filters := 126;
       WHEN OTHERS =>
-        filters := 128; --0
+        filters := 126; --0
     END CASE;
     RETURN filters;
   END filters;
@@ -215,6 +215,8 @@ PACKAGE BODY YOLO_pkg IS
     VARIABLE layerbits : INTEGER;
   BEGIN
     CASE layer IS
+      WHEN 1 =>
+        layerbits := 9;
       WHEN 9 =>
         layerbits := 16;
       WHEN OTHERS =>
@@ -272,23 +274,15 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 1 =>
         weightsbitsAddress := 6;
       WHEN 2 =>
-        weightsbitsAddress := 9;
+        weightsbitsAddress := 8;
       WHEN 3 =>
-        weightsbitsAddress := 11;
+        weightsbitsAddress := 10;
       WHEN 4 =>
-        weightsbitsAddress := 13;
+        weightsbitsAddress := 12;
       WHEN 5 =>
-        weightsbitsAddress := 15;
-      WHEN 6 =>
-        weightsbitsAddress := 17;
-      WHEN 7 =>
-        weightsbitsAddress := 19;
-      WHEN 8 =>
-        weightsbitsAddress := 20;
-      WHEN 9 =>
-        weightsbitsAddress := 17;
+        weightsbitsAddress := 14;
       WHEN OTHERS =>
-        weightsbitsAddress := 11;
+        weightsbitsAddress := 16;
     END CASE;
     RETURN weightsbitsAddress;
   END weightsbitsAddress;
@@ -298,7 +292,7 @@ PACKAGE BODY YOLO_pkg IS
   BEGIN
     CASE layer IS
       WHEN 1 =>
-        bufferwidth := 11;
+        bufferwidth := 14;
       WHEN 2 =>
         bufferwidth := 14;
       WHEN 3 =>
@@ -314,9 +308,9 @@ PACKAGE BODY YOLO_pkg IS
       WHEN 8 =>
         bufferwidth := 20;
       WHEN 9 =>
-        bufferwidth := 28;
+        bufferwidth := 16;
       WHEN OTHERS =>
-        bufferwidth := 20;
+        bufferwidth := 16;
     END CASE;
     RETURN bufferwidth;
   END bufferwidth;

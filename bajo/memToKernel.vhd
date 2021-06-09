@@ -13,39 +13,39 @@ ENTITY MemToKernel IS
     PORT (
         clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
-        oe : IN STD_LOGIC;
+        enableKernel : IN STD_LOGIC;
 
         padding : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
         kernelCol : IN unsigned(1 DOWNTO 0);
         kernelRow : IN unsigned(1 DOWNTO 0);
 
-        Din : IN STD_LOGIC_VECTOR((grid(layer) * bits(layer)) - 1 DOWNTO 0);
-        Dout : OUT STD_LOGIC_VECTOR(((grid(layer) * bits(layer))) - 1 DOWNTO 0));
+        Din : IN STD_LOGIC_VECTOR((grid(layer) * 6) - 1 DOWNTO 0);
+        Dout : OUT STD_LOGIC_VECTOR(((grid(layer) * 6)) - 1 DOWNTO 0));
 END MemToKernel;
 
 ARCHITECTURE arch OF MemToKernel IS
-    SIGNAL dataCol0, dataCol1, dataCol2 : STD_LOGIC_VECTOR(bits(layer) - 1 DOWNTO 0);
-    SIGNAL dataRow0, dataRow1, dataRow2 : STD_LOGIC_VECTOR(bits(layer) - 1 DOWNTO 0);
-    SIGNAL dataPad0, dataPad1, dataPad2 : STD_LOGIC_VECTOR(bits(layer) - 1 DOWNTO 0);
+    SIGNAL dataCol0, dataCol1, dataCol2 : STD_LOGIC_VECTOR(6 - 1 DOWNTO 0);
+    SIGNAL dataRow0, dataRow1, dataRow2 : STD_LOGIC_VECTOR(6 - 1 DOWNTO 0);
+    SIGNAL dataPad0, dataPad1, dataPad2 : STD_LOGIC_VECTOR(6 - 1 DOWNTO 0);
 
-    SIGNAL D0, D1, D3, D4, D6, D7 : STD_LOGIC_VECTOR(bits(layer) - 1 DOWNTO 0);
+    SIGNAL D0, D1, D3, D4, D6, D7 : STD_LOGIC_VECTOR(6 - 1 DOWNTO 0);
 BEGIN
 
     mux1 : PROCESS (kernelCol, Din)
     BEGIN
         CASE kernelCol IS
             WHEN "00" => --MEM 0 MEM 3 MEM 6
-                dataCol0 <= Din(bits(layer) - 1 DOWNTO 0);
-                dataCol1 <= Din(4 * bits(layer) - 1 DOWNTO 3 * bits(layer));
-                dataCol2 <= Din(7 * bits(layer) - 1 DOWNTO 6 * bits(layer));
+                dataCol0 <= Din(6 - 1 DOWNTO 0);
+                dataCol1 <= Din(4 * 6 - 1 DOWNTO 3 * 6);
+                dataCol2 <= Din(7 * 6 - 1 DOWNTO 6 * 6);
             WHEN "01" => --MEM 1 MEM 4 MEM 7
-                dataCol0 <= Din(2 * bits(layer) - 1 DOWNTO bits(layer));
-                dataCol1 <= Din(5 * bits(layer) - 1 DOWNTO 4 * bits(layer));
-                dataCol2 <= Din(8 * bits(layer) - 1 DOWNTO 7 * bits(layer));
+                dataCol0 <= Din(2 * 6 - 1 DOWNTO 6);
+                dataCol1 <= Din(5 * 6 - 1 DOWNTO 4 * 6);
+                dataCol2 <= Din(8 * 6 - 1 DOWNTO 7 * 6);
             WHEN "10" => --MEM 2 MEM 5 MEM 8
-                dataCol0 <= Din(3 * bits(layer) - 1 DOWNTO 2 * bits(layer));
-                dataCol1 <= Din(6 * bits(layer) - 1 DOWNTO 5 * bits(layer));
-                dataCol2 <= Din(9 * bits(layer) - 1 DOWNTO 8 * bits(layer));
+                dataCol0 <= Din(3 * 6 - 1 DOWNTO 2 * 6);
+                dataCol1 <= Din(6 * 6 - 1 DOWNTO 5 * 6);
+                dataCol2 <= Din(9 * 6 - 1 DOWNTO 8 * 6);
             WHEN OTHERS =>
                 dataCol0 <= (OTHERS => '0');
                 dataCol1 <= (OTHERS => '0');
@@ -80,7 +80,7 @@ BEGIN
     BEGIN
 
         CASE padding IS
-            WHEN "111" => --anula la fila de arriba - columna derecha - fila de abajo
+            WHEN "111" => --anula la fila de arriba - fila medio - fila de abajo
                 dataPad0 <= (OTHERS => '0');
                 dataPad1 <= (OTHERS => '0');
                 dataPad2 <= (OTHERS => '0');
@@ -109,7 +109,7 @@ BEGIN
             D6 <= (OTHERS => '0');
             D7 <= (OTHERS => '0');
         ELSIF rising_edge(clk) THEN
-            IF oe = '1' THEN
+            IF enableKernel = '1' THEN
                 D0 <= D1;
                 D3 <= D4;
                 D6 <= D7;
